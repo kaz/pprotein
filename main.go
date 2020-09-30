@@ -11,7 +11,7 @@ func main() {
 	embed.EnableLogging(e)
 
 	pprofHandler, err := pprof.NewHandlers(pprof.Config{
-		Workdir: "./tmp",
+		Workdir: "./tmp/pprof",
 	})
 	if err != nil {
 		panic(err)
