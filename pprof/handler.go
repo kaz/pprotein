@@ -3,12 +3,19 @@ package pprof
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/google/pprof/driver"
 	"github.com/labstack/echo"
 )
 
-const INJECTED_ROUTER_KEY = "router"
+const (
+	INJECTED_ROUTER_KEY = "router"
+
+	STATUS_OK      ProfileStatus = "ok"
+	STATUS_FAIL    ProfileStatus = "fail"
+	STATUS_PENDING ProfileStatus = "pending"
+)
 
 type (
 	Config struct {
@@ -16,6 +23,14 @@ type (
 	}
 	Handler struct {
 		profiler *Profiler
+		stats    sync.Map
+	}
+
+	ProfileStatus string
+	ProfileInfo   struct {
+		Status  ProfileStatus
+		Message string
+		Profile *Profile
 	}
 
 	FetchRequest struct {
@@ -29,13 +44,14 @@ func NewHandlers(config Config) (*Handler, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize profiler: %w", err)
 	}
-	return &Handler{profiler}, nil
+	return &Handler{profiler: profiler}, nil
 }
 
 func (h *Handler) Register(g *echo.Group) error {
 	g.Use(injectRouter(g))
 
-	g.POST("/fetch", h.fetch)
+	g.GET("/stats", h.statsHandler)
+	g.POST("/fetch", h.fetchHandler)
 
 	profiles, err := h.profiler.List()
 	if err != nil {
@@ -43,7 +59,7 @@ func (h *Handler) Register(g *echo.Group) error {
 	}
 
 	for _, p := range profiles {
-		registerProfile(g.Group(fmt.Sprintf("/%s", p.ID)), p)
+		h.parseProfile(g.Group(fmt.Sprintf("/%s", p.ID)), p)
 	}
 
 	return nil
@@ -53,25 +69,39 @@ func injectRouter(g *echo.Group) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			c.Set(INJECTED_ROUTER_KEY, g)
-			return nil
+			return next(c)
 		}
 	}
 }
 
-func registerProfile(g *echo.Group, p *Profile) {
+func (h *Handler) parseProfile(g *echo.Group, p *Profile) {
+	h.stats.Store(p.ID, &ProfileInfo{
+		Status:  STATUS_PENDING,
+		Message: "Parsing",
+		Profile: p,
+	})
+
 	ch := make(chan error)
 	go func() {
-		ch <- registerProfileSync(g, p)
+		ch <- registerProfileHandlers(g, p)
 	}()
 	go func() {
 		if err := <-ch; err != nil {
-			// TODO CHANGE STATE
+			h.stats.Store(p.ID, &ProfileInfo{
+				Status:  STATUS_FAIL,
+				Message: err.Error(),
+				Profile: p,
+			})
 			return
 		}
-		// TODO CHANGE STATE
+		h.stats.Store(p.ID, &ProfileInfo{
+			Status:  STATUS_OK,
+			Message: "",
+			Profile: p,
+		})
 	}()
 }
-func registerProfileSync(g *echo.Group, p *Profile) error {
+func registerProfileHandlers(g *echo.Group, p *Profile) error {
 	options := &driver.Options{
 		Flagset: NewFlagSet([]string{
 			"-no_browser",
@@ -95,7 +125,16 @@ func registerProfileSync(g *echo.Group, p *Profile) error {
 	return nil
 }
 
-func (h *Handler) fetch(c echo.Context) error {
+func (h *Handler) statsHandler(c echo.Context) error {
+	data := map[string]interface{}{}
+	h.stats.Range(func(key, value interface{}) bool {
+		data[key.(string)] = value
+		return true
+	})
+	return c.JSON(http.StatusOK, data)
+}
+
+func (h *Handler) fetchHandler(c echo.Context) error {
 	g, ok := c.Get(INJECTED_ROUTER_KEY).(*echo.Group)
 	if !ok {
 		return fmt.Errorf("cannot retrieve router!")
@@ -106,17 +145,25 @@ func (h *Handler) fetch(c echo.Context) error {
 		return fmt.Errorf("failed to read request body: %w", err)
 	}
 
-	ch := make(chan func() (*Profile, error))
+	p := h.profiler.CreateProfile(req.URL, req.Duration)
+	h.stats.Store(p.ID, &ProfileInfo{
+		Status:  STATUS_PENDING,
+		Message: "Fetching",
+		Profile: p,
+	})
 
-	go h.profiler.Fetch(req.URL, req.Duration, ch)
+	ch := make(chan error)
+	go p.Fetch(ch)
 	go func() {
-		p, err := (<-ch)()
-		if err != nil {
-			// TODO CHANGE STATE
+		if err := <-ch; err != nil {
+			h.stats.Store(p.ID, &ProfileInfo{
+				Status:  STATUS_FAIL,
+				Message: err.Error(),
+				Profile: p,
+			})
 			return
 		}
-		// TODO CHANGE STATE
-		registerProfile(g.Group(fmt.Sprintf("/%s", p.ID)), p)
+		h.parseProfile(g.Group(fmt.Sprintf("/%s", p.ID)), p)
 	}()
 
 	return c.NoContent(http.StatusNoContent)

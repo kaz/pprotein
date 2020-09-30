@@ -19,6 +19,7 @@ type (
 
 	Profile struct {
 		bodyPath string
+		metaPath string
 
 		ID       string
 		Datetime time.Time
@@ -34,52 +35,19 @@ func NewProfiler(workdir string) (*Profiler, error) {
 	return &Profiler{workdir: workdir}, nil
 }
 
-func (pr *Profiler) Fetch(url string, duration int, result chan func() (*Profile, error)) {
-	res, err := pr.fetch(url, duration)
-	result <- func() (*Profile, error) { return res, err }
-}
-func (pr *Profiler) fetch(url string, duration int) (*Profile, error) {
+func (pr *Profiler) CreateProfile(url string, duration int) *Profile {
 	ts := time.Now()
 	id := fmt.Sprintf("%d", ts.UnixNano())
 
-	bodyPath := path.Join(pr.workdir, fmt.Sprintf("%s.pb.gz", id))
-	metaPath := path.Join(pr.workdir, fmt.Sprintf("%s.json", id))
+	return &Profile{
+		bodyPath: path.Join(pr.workdir, fmt.Sprintf("%s.pb.gz", id)),
+		metaPath: path.Join(pr.workdir, fmt.Sprintf("%s.json", id)),
 
-	prof := &Profile{
-		bodyPath: bodyPath,
 		ID:       id,
 		Datetime: ts,
 		URL:      url,
 		Duration: duration,
 	}
-
-	bodyFile, err := os.Create(bodyPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create body file: %w", err)
-	}
-	defer bodyFile.Close()
-
-	metaFile, err := os.Create(metaPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create meta file: %w", err)
-	}
-	defer metaFile.Close()
-
-	resp, err := http.Get(fmt.Sprintf("%s?second=%d", url, duration))
-	if err != nil {
-		return nil, fmt.Errorf("http error: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if _, err := io.Copy(bodyFile, resp.Body); err != nil {
-		return nil, fmt.Errorf("failed to write body: %w", err)
-	}
-
-	if err := json.NewEncoder(metaFile).Encode(prof); err != nil {
-		return nil, fmt.Errorf("failed to write meta: %w", err)
-	}
-
-	return prof, nil
 }
 
 func (pr *Profiler) List() ([]*Profile, error) {
@@ -99,13 +67,18 @@ func (pr *Profiler) List() ([]*Profile, error) {
 
 		metaFile, err := os.Open(metaPath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open meta file: %w", err)
+			fmt.Fprintf(os.Stderr, "[SKIPPED] failed to open meta file: %v", err)
+			continue
 		}
 		defer metaFile.Close()
 
-		prof := &Profile{bodyPath: bodyPath}
+		prof := &Profile{
+			bodyPath: bodyPath,
+			metaPath: metaPath,
+		}
 		if err := json.NewDecoder(metaFile).Decode(prof); err != nil {
-			return nil, fmt.Errorf("failed to decode meta: %w", err)
+			fmt.Fprintf(os.Stderr, "[SKIPPED] failed to decode meta: %v", err)
+			continue
 		}
 
 		profiles = append(profiles, prof)
@@ -116,4 +89,37 @@ func (pr *Profiler) List() ([]*Profile, error) {
 
 func (p *Profile) Path() string {
 	return p.bodyPath
+}
+
+func (p *Profile) Fetch(result chan error) {
+	result <- p.fetch()
+}
+func (p *Profile) fetch() error {
+	resp, err := http.Get(fmt.Sprintf("%s?second=%d", p.URL, p.Duration))
+	if err != nil {
+		return fmt.Errorf("http error: %w", err)
+	}
+	defer resp.Body.Close()
+
+	bodyFile, err := os.Create(p.bodyPath)
+	if err != nil {
+		return fmt.Errorf("failed to create body file: %w", err)
+	}
+	defer bodyFile.Close()
+
+	metaFile, err := os.Create(p.metaPath)
+	if err != nil {
+		return fmt.Errorf("failed to create meta file: %w", err)
+	}
+	defer metaFile.Close()
+
+	if _, err := io.Copy(bodyFile, resp.Body); err != nil {
+		return fmt.Errorf("failed to write body: %w", err)
+	}
+
+	if err := json.NewEncoder(metaFile).Encode(p); err != nil {
+		return fmt.Errorf("failed to write meta: %w", err)
+	}
+
+	return nil
 }
