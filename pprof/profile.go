@@ -38,12 +38,9 @@ func NewProfiler(workdir string) (*Profiler, error) {
 	return &Profiler{workdir: workdir}, nil
 }
 
-func (pr *Profiler) Fetch(url string, duration int, chResult chan *Profile, chError chan error) {
-	if res, err := pr.fetch(url, duration); err != nil {
-		chError <- err
-	} else {
-		chResult <- res
-	}
+func (pr *Profiler) Fetch(url string, duration int, result chan func() (*Profile, error)) {
+	res, err := pr.fetch(url, duration)
+	result <- func() (*Profile, error) { return res, err }
 }
 func (pr *Profiler) fetch(url string, duration int) (*Profile, error) {
 	ts := time.Now()

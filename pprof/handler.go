@@ -53,6 +53,7 @@ func registerProfile(g *echo.Group, p *Profile) {
 	go func() {
 		if err := <-ch; err != nil {
 			// TODO CHANGE STATE
+			return
 		}
 		// TODO CHANGE STATE
 	}()
@@ -92,20 +93,17 @@ func (h *Handler) fetch(c echo.Context) error {
 		return fmt.Errorf("failed to read request body: %w", err)
 	}
 
-	chRes := make(chan *Profile)
-	chErr := make(chan error)
+	ch := make(chan func() (*Profile, error))
 
-	go h.profiler.Fetch(req.URL, req.Duration, chRes, chErr)
+	go h.profiler.Fetch(req.URL, req.Duration, ch)
 	go func() {
-		select {
-		case err := <-chErr:
-			if err != nil {
-				// TODO CHANGE STATE
-			}
-		case p := <-chRes:
+		p, err := (<-ch)()
+		if err != nil {
 			// TODO CHANGE STATE
-			registerProfile(g.Group(fmt.Sprintf("/%s", p.ID)), p)
+			return
 		}
+		// TODO CHANGE STATE
+		registerProfile(g.Group(fmt.Sprintf("/%s", p.ID)), p)
 	}()
 
 	return c.NoContent(http.StatusNoContent)
