@@ -10,11 +10,9 @@ import (
 )
 
 const (
-	INJECTED_ROUTER_KEY = "router"
-
-	STATUS_OK      ProfileStatus = "ok"
-	STATUS_FAIL    ProfileStatus = "fail"
-	STATUS_PENDING ProfileStatus = "pending"
+	ProfileStatusOk      ProfileStatus = "ok"
+	ProfileStatusFail    ProfileStatus = "fail"
+	ProfileStatusPending ProfileStatus = "pending"
 )
 
 type (
@@ -24,6 +22,9 @@ type (
 	Handler struct {
 		profiler *Profiler
 		stats    sync.Map
+
+		route   *echo.Group
+		routeMu sync.Mutex
 	}
 
 	ProfileStatus string
@@ -48,10 +49,10 @@ func NewHandlers(config Config) (*Handler, error) {
 }
 
 func (h *Handler) Register(g *echo.Group) error {
-	g.Use(injectRouter(g))
+	h.route = g
 
-	g.GET("/stats", h.statsHandler)
-	g.POST("/fetch", h.fetchHandler)
+	g.GET("/profiles", h.profilesGet)
+	g.POST("/profiles", h.profilesPost)
 
 	profiles, err := h.profiler.List()
 	if err != nil {
@@ -59,73 +60,74 @@ func (h *Handler) Register(g *echo.Group) error {
 	}
 
 	for _, p := range profiles {
-		h.parseProfile(g.Group(fmt.Sprintf("/%s", p.ID)), p)
+		h.parseProfile(p)
 	}
 
 	return nil
 }
 
-func injectRouter(g *echo.Group) echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Set(INJECTED_ROUTER_KEY, g)
-			return next(c)
-		}
-	}
-}
-
-func (h *Handler) parseProfile(g *echo.Group, p *Profile) {
+func (h *Handler) parseProfile(p *Profile) {
 	h.stats.Store(p.ID, &ProfileInfo{
-		Status:  STATUS_PENDING,
+		Status:  ProfileStatusPending,
 		Message: "Parsing",
 		Profile: p,
 	})
 
 	ch := make(chan error)
 	go func() {
-		ch <- registerProfileHandlers(g, p)
+		ch <- h.parseProfileSync(p)
 	}()
 	go func() {
 		if err := <-ch; err != nil {
 			h.stats.Store(p.ID, &ProfileInfo{
-				Status:  STATUS_FAIL,
+				Status:  ProfileStatusFail,
 				Message: err.Error(),
 				Profile: p,
 			})
 			return
 		}
 		h.stats.Store(p.ID, &ProfileInfo{
-			Status:  STATUS_OK,
+			Status:  ProfileStatusOk,
 			Message: "",
 			Profile: p,
 		})
 	}()
 }
-func registerProfileHandlers(g *echo.Group, p *Profile) error {
+func (h *Handler) parseProfileSync(p *Profile) error {
+	registerProfileHandlers := func(args *driver.HTTPServerArgs) error {
+		if args.Hostport != "0:0" {
+			return fmt.Errorf("unxpected hostport: %v", args.Hostport)
+		}
+
+		h.routeMu.Lock()
+		defer h.routeMu.Unlock()
+
+		ig := h.route.Group(getProfilePath(p))
+		for key, handler := range args.Handlers {
+			ig.Any(key, echo.WrapHandler(handler))
+		}
+		return nil
+	}
+
 	options := &driver.Options{
 		Flagset: NewFlagSet([]string{
 			"-no_browser",
 			"-http", "0:0",
 			p.Path(),
 		}),
-		HTTPServer: func(args *driver.HTTPServerArgs) error {
-			if args.Hostport != "0:0" {
-				return fmt.Errorf("unxpected hostport: %v", args.Hostport)
-			}
-			ig := g.Group(fmt.Sprintf("/%s", p.ID))
-			for key, handler := range args.Handlers {
-				ig.Any(key, echo.WrapHandler(handler))
-			}
-			return nil
-		},
+		HTTPServer: registerProfileHandlers,
 	}
+
 	if err := driver.PProf(options); err != nil {
 		return fmt.Errorf("pprof internal error: %w", err)
 	}
 	return nil
 }
+func getProfilePath(p *Profile) string {
+	return fmt.Sprintf("/profiles/%s", p.ID)
+}
 
-func (h *Handler) statsHandler(c echo.Context) error {
+func (h *Handler) profilesGet(c echo.Context) error {
 	data := map[string]interface{}{}
 	h.stats.Range(func(key, value interface{}) bool {
 		data[key.(string)] = value
@@ -134,12 +136,7 @@ func (h *Handler) statsHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, data)
 }
 
-func (h *Handler) fetchHandler(c echo.Context) error {
-	g, ok := c.Get(INJECTED_ROUTER_KEY).(*echo.Group)
-	if !ok {
-		return echo.NewHTTPError(http.StatusInternalServerError, "cannot retrieve router!")
-	}
-
+func (h *Handler) profilesPost(c echo.Context) error {
 	req := &FetchRequest{}
 	if err := c.Bind(req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
@@ -151,7 +148,7 @@ func (h *Handler) fetchHandler(c echo.Context) error {
 
 	p := h.profiler.CreateProfile(req.URL, req.Duration)
 	h.stats.Store(p.ID, &ProfileInfo{
-		Status:  STATUS_PENDING,
+		Status:  ProfileStatusPending,
 		Message: "Fetching",
 		Profile: p,
 	})
@@ -161,13 +158,13 @@ func (h *Handler) fetchHandler(c echo.Context) error {
 	go func() {
 		if err := <-ch; err != nil {
 			h.stats.Store(p.ID, &ProfileInfo{
-				Status:  STATUS_FAIL,
+				Status:  ProfileStatusFail,
 				Message: err.Error(),
 				Profile: p,
 			})
 			return
 		}
-		h.parseProfile(g.Group(fmt.Sprintf("/%s", p.ID)), p)
+		h.parseProfile(p)
 	}()
 
 	return c.NoContent(http.StatusNoContent)

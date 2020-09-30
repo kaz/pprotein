@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -37,7 +38,7 @@ func NewProfiler(workdir string) (*Profiler, error) {
 
 func (pr *Profiler) CreateProfile(url string, duration int) *Profile {
 	ts := time.Now()
-	id := fmt.Sprintf("%d", ts.UnixNano())
+	id := strconv.FormatInt(ts.UnixNano(), 36)
 
 	return &Profile{
 		bodyPath: path.Join(pr.workdir, fmt.Sprintf("%s.pb.gz", id)),
