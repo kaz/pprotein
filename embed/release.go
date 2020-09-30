@@ -1,15 +1,15 @@
 // +build release
 
-package main
+package embed
 
 import (
 	"github.com/labstack/echo"
 )
 
-func echoPProf(e *echo.Echo) {
+func EnablePProf(e *echo.Echo) {
 	return
 }
 
-func echoLogging(e *echo.Echo) {
+func EnableLogging(e *echo.Echo) {
 	return
 }

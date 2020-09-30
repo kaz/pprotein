@@ -1,6 +1,6 @@
 // +build !release
 
-package main
+package embed
 
 import (
 	"net/http"
@@ -11,7 +11,7 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-func echoPProf(e *echo.Echo) {
+func EnablePProf(e *echo.Echo) {
 	pprofGroup := e.Group("/debug/pprof")
 	pprofGroup.Any("/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
 	pprofGroup.Any("/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))
@@ -20,7 +20,7 @@ func echoPProf(e *echo.Echo) {
 	pprofGroup.Any("/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
 }
 
-func echoLogging(e *echo.Echo) {
+func EnableLogging(e *echo.Echo) {
 	e.Debug = true
 	e.Logger.SetLevel(log.DEBUG)
 	e.Use(middleware.Logger())

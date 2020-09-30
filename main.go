@@ -47,7 +47,7 @@ func (f *FlagSet) Parse(usage func()) []string {
 }
 
 func main() {
-	flagSet := NewFlagSet([]string{"-http", "0:9000", "http://localhost/pprof"})
+	flagSet := NewFlagSet([]string{"-http", "0:9000", "http://localhost:8080/debug/pprof"})
 	if err := driver.PProf(&driver.Options{Flagset: flagSet}); err != nil {
 		fmt.Printf("%#v\n", err)
 	}
