@@ -9,12 +9,16 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"time"
 )
 
 type (
 	Profiler struct {
 		workdir string
+
+		mu       sync.RWMutex
+		profiles []*Profile
 	}
 
 	Profile struct {
@@ -31,7 +35,7 @@ func NewProfiler(workdir string) (*Profiler, error) {
 	if err := os.MkdirAll(workdir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create workdir: %w", err)
 	}
-	return &Profiler{workdir}, nil
+	return &Profiler{workdir: workdir}, nil
 }
 
 func (pr *Profiler) Fetch(url string, duration int, result chan error) {
@@ -78,10 +82,30 @@ func (pr *Profiler) fetch(url string, duration int) error {
 		return fmt.Errorf("failed to write meta: %w", err)
 	}
 
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+
+	pr.profiles = append(pr.profiles, prof)
+
 	return nil
 }
 
 func (pr *Profiler) List() ([]*Profile, error) {
+	pr.mu.RLock()
+	if pr.profiles != nil {
+		defer pr.mu.RUnlock()
+		return pr.profiles, nil
+	}
+	pr.mu.RUnlock()
+
+	pr.mu.Lock()
+	defer pr.mu.Unlock()
+
+	var err error
+	pr.profiles, err = pr.list()
+	return pr.profiles, err
+}
+func (pr *Profiler) list() ([]*Profile, error) {
 	entries, err := ioutil.ReadDir(pr.workdir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read dir: %w", err)
