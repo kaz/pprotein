@@ -18,10 +18,12 @@ export default new Vuex.Store({
 	},
 	mutations: {
 		setProfiles(state, profiles: { [key: string]: ProfileInfo; }) {
-			state.profiles = Object.values(profiles).map(e => {
-				e.Profile.Datetime = new Date(e.Profile.Datetime);
-				return e;
-			});
+			state.profiles = Object.values(profiles)
+				.map(e => {
+					e.Profile.Datetime = new Date(e.Profile.Datetime);
+					return e;
+				})
+				.sort((a, b) => b.Profile.Datetime.getTime() - a.Profile.Datetime.getTime());
 		}
 	},
 	actions: {
