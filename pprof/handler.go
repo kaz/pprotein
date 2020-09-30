@@ -8,6 +8,8 @@ import (
 	"github.com/labstack/echo"
 )
 
+const INJECTED_ROUTER_KEY = "router"
+
 type (
 	Config struct {
 		Workdir string
@@ -31,6 +33,8 @@ func NewHandlers(config Config) (*Handler, error) {
 }
 
 func (h *Handler) Register(g *echo.Group) error {
+	g.Use(injectRouter(g))
+
 	g.POST("/fetch", h.fetch)
 
 	profiles, err := h.profiler.List()
@@ -43,6 +47,15 @@ func (h *Handler) Register(g *echo.Group) error {
 	}
 
 	return nil
+}
+
+func injectRouter(g *echo.Group) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set(INJECTED_ROUTER_KEY, g)
+			return nil
+		}
+	}
 }
 
 func registerProfile(g *echo.Group, p *Profile) {
@@ -83,7 +96,7 @@ func registerProfileSync(g *echo.Group, p *Profile) error {
 }
 
 func (h *Handler) fetch(c echo.Context) error {
-	g, ok := c.Get("group").(*echo.Group)
+	g, ok := c.Get(INJECTED_ROUTER_KEY).(*echo.Group)
 	if !ok {
 		return fmt.Errorf("cannot retrieve router!")
 	}
