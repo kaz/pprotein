@@ -137,16 +137,16 @@ func (h *Handler) statsHandler(c echo.Context) error {
 func (h *Handler) fetchHandler(c echo.Context) error {
 	g, ok := c.Get(INJECTED_ROUTER_KEY).(*echo.Group)
 	if !ok {
-		return fmt.Errorf("cannot retrieve router!")
+		return echo.NewHTTPError(http.StatusInternalServerError, "cannot retrieve router!")
 	}
 
 	req := &FetchRequest{}
 	if err := c.Bind(req); err != nil {
-		return fmt.Errorf("failed to read request body: %w", err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 	}
 
 	if req.URL == "" || req.Duration == 0 {
-		return fmt.Errorf("unexpected request format")
+		return echo.NewHTTPError(http.StatusBadRequest, "unexpected request format")
 	}
 
 	p := h.profiler.CreateProfile(req.URL, req.Duration)
