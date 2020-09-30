@@ -145,6 +145,10 @@ func (h *Handler) fetchHandler(c echo.Context) error {
 		return fmt.Errorf("failed to read request body: %w", err)
 	}
 
+	if req.URL == "" || req.Duration == 0 {
+		return fmt.Errorf("unexpected request format")
+	}
+
 	p := h.profiler.CreateProfile(req.URL, req.Duration)
 	h.stats.Store(p.ID, &ProfileInfo{
 		Status:  STATUS_PENDING,
