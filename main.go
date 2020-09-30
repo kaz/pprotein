@@ -17,7 +17,7 @@ func main() {
 		panic(err)
 	}
 
-	if err := pprofHandler.Register(e.Group("/pprof")); err != nil {
+	if err := pprofHandler.Register(e.Group("/api/pprof")); err != nil {
 		panic(err)
 	}
 
