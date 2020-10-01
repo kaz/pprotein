@@ -55,5 +55,18 @@ import { defineComponent } from "vue";
 
 import "typeface-courier-prime";
 
-export default defineComponent({});
+type Dict = { [key: string]: string };
+
+export default defineComponent({
+  methods: {
+    getTitle(params: Dict, meta: Dict) {
+      return Object.entries(params).reduce((title, [key, val]) => title.replace(`{{${key}}}`, val), meta.title || "");
+    },
+  },
+  watch: {
+    $route({ params, meta }) {
+      document.title = `${this.getTitle(params, meta)} | PProtein`;
+    },
+  },
+});
 </script>
