@@ -101,7 +101,7 @@ func (e *Entry) Fetch(result chan error) {
 	result <- e.fetch()
 }
 func (e *Entry) fetch() error {
-	resp, err := http.Get(fmt.Sprintf("%s?second=%d", e.URL, e.Duration))
+	resp, err := http.Get(fmt.Sprintf("%s?seconds=%d", e.URL, e.Duration))
 	if err != nil {
 		return fmt.Errorf("http error: %w", err)
 	}

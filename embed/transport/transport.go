@@ -23,9 +23,9 @@ func NewTailHandler(filename string) *TailHandler {
 }
 
 func (h *TailHandler) Handle(c echo.Context) error {
-	second, err := strconv.Atoi(c.QueryParam("second"))
+	seconds, err := strconv.Atoi(c.QueryParam("seconds"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid `second` parameter: %v", err))
+		seconds = 30
 	}
 
 	t, err := tail.TailFile(h.filename, tail.Config{
@@ -42,7 +42,7 @@ func (h *TailHandler) Handle(c echo.Context) error {
 	}
 
 	r, w := io.Pipe()
-	timer := time.NewTimer(time.Duration(second) * time.Second)
+	timer := time.NewTimer(time.Duration(seconds) * time.Second)
 
 	go func() {
 		defer r.Close()
