@@ -39,5 +39,5 @@ func main() {
 		panic(err)
 	}
 
-	panic(e.Start("0:9000"))
+	panic(e.Start(":9000"))
 }
