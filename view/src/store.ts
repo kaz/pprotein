@@ -1,10 +1,10 @@
 import Vuex from "vuex";
 
-type ProfileStatus = "ok" | "fail" | "pending";
-type ProfileInfo = {
-	Status: ProfileStatus;
+type Status = "ok" | "fail" | "pending";
+type EntryInfo = {
+	Status: Status;
 	Message: string;
-	Profile: {
+	Entry: {
 		ID: string;
 		Datetime: Date;
 		URL: string;
@@ -14,16 +14,16 @@ type ProfileInfo = {
 
 export default new Vuex.Store({
 	state: {
-		profiles: [] as ProfileInfo[],
+		profiles: [] as EntryInfo[],
 	},
 	mutations: {
-		setProfiles(state, profiles: { [key: string]: ProfileInfo; }) {
+		setProfiles(state, profiles: { [key: string]: EntryInfo; }) {
 			state.profiles = Object.values(profiles)
 				.map(e => {
-					e.Profile.Datetime = new Date(e.Profile.Datetime);
+					e.Entry.Datetime = new Date(e.Entry.Datetime);
 					return e;
 				})
-				.sort((a, b) => b.Profile.Datetime.getTime() - a.Profile.Datetime.getTime());
+				.sort((a, b) => b.Entry.Datetime.getTime() - a.Entry.Datetime.getTime());
 		}
 	},
 	actions: {

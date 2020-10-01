@@ -25,13 +25,13 @@
         </tr>
       </thead>
       <tbody>
-        <tr :key="info.Profile.ID" v-for="info in $store.state.profiles">
+        <tr :key="info.Entry.ID" v-for="info in $store.state.profiles">
           <td>
-            <router-link v-if="info.Status == `ok`" :to="`/pprof/${info.Profile.ID}`">Open</router-link>
+            <router-link v-if="info.Status == `ok`" :to="`/pprof/${info.Entry.ID}`">Open</router-link>
           </td>
-          <td>{{ info.Profile.Datetime.toLocaleString() }}</td>
-          <td>{{ info.Profile.URL }}</td>
-          <td>{{ info.Profile.Duration }}</td>
+          <td>{{ info.Entry.Datetime.toLocaleString() }}</td>
+          <td>{{ info.Entry.URL }}</td>
+          <td>{{ info.Entry.Duration }}</td>
           <td>
             <div :class="`cell ${info.Status}`"></div>
             {{ info.Message || info.Status }}
