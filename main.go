@@ -16,14 +16,10 @@ func main() {
 	view := http.FileServer(rice.MustFindBox("view/dist").HTTPBox())
 	e.GET("/*", echo.WrapHandler(view))
 
-	pprofHandler, err := pprof.NewHandlers(pprof.Config{
+	pprofCfg := pprof.Config{
 		Workdir: "./tmp/pprof",
-	})
-	if err != nil {
-		panic(err)
 	}
-
-	if err := pprofHandler.Register(e.Group("/api/pprof")); err != nil {
+	if err := pprof.RegisterHandlers(e.Group("/api/pprof"), pprofCfg); err != nil {
 		panic(err)
 	}
 

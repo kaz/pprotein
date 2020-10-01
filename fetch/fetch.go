@@ -1,4 +1,4 @@
-package pprof
+package fetch
 
 import (
 	"encoding/json"
@@ -14,11 +14,12 @@ import (
 )
 
 type (
-	Profiler struct {
-		workdir string
+	Manager struct {
+		workdir   string
+		extention string
 	}
 
-	Profile struct {
+	Entry struct {
 		bodyPath string
 		metaPath string
 
@@ -29,20 +30,24 @@ type (
 	}
 )
 
-func NewProfiler(workdir string) (*Profiler, error) {
+func NewManager(workdir string, extention string) (*Manager, error) {
 	if err := os.MkdirAll(workdir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create workdir: %w", err)
 	}
-	return &Profiler{workdir: workdir}, nil
+	m := &Manager{
+		workdir:   workdir,
+		extention: extention,
+	}
+	return m, nil
 }
 
-func (pr *Profiler) CreateProfile(url string, duration int) *Profile {
+func (m *Manager) Create(url string, duration int) *Entry {
 	ts := time.Now()
 	id := strconv.FormatInt(ts.UnixNano(), 36)
 
-	return &Profile{
-		bodyPath: path.Join(pr.workdir, fmt.Sprintf("%s.pb.gz", id)),
-		metaPath: path.Join(pr.workdir, fmt.Sprintf("%s.json", id)),
+	return &Entry{
+		bodyPath: path.Join(m.workdir, fmt.Sprintf("%s.%s", id, m.extention)),
+		metaPath: path.Join(m.workdir, fmt.Sprintf("%s.json", id)),
 
 		ID:       id,
 		Datetime: ts,
@@ -51,20 +56,20 @@ func (pr *Profiler) CreateProfile(url string, duration int) *Profile {
 	}
 }
 
-func (pr *Profiler) List() ([]*Profile, error) {
-	entries, err := ioutil.ReadDir(pr.workdir)
+func (m *Manager) List() ([]*Entry, error) {
+	finfos, err := ioutil.ReadDir(m.workdir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read dir: %w", err)
 	}
 
-	profiles := []*Profile{}
-	for _, ent := range entries {
-		if ent.IsDir() || !strings.HasSuffix(ent.Name(), ".json") {
+	entries := []*Entry{}
+	for _, finfo := range finfos {
+		if finfo.IsDir() || !strings.HasSuffix(finfo.Name(), ".json") {
 			continue
 		}
 
-		bodyPath := path.Join(pr.workdir, strings.Replace(ent.Name(), ".json", ".pb.gz", 1))
-		metaPath := path.Join(pr.workdir, ent.Name())
+		bodyPath := path.Join(m.workdir, strings.Replace(finfo.Name(), ".json", fmt.Sprintf(".%s", m.extention), 1))
+		metaPath := path.Join(m.workdir, finfo.Name())
 
 		metaFile, err := os.Open(metaPath)
 		if err != nil {
@@ -73,42 +78,42 @@ func (pr *Profiler) List() ([]*Profile, error) {
 		}
 		defer metaFile.Close()
 
-		prof := &Profile{
+		ent := &Entry{
 			bodyPath: bodyPath,
 			metaPath: metaPath,
 		}
-		if err := json.NewDecoder(metaFile).Decode(prof); err != nil {
+		if err := json.NewDecoder(metaFile).Decode(ent); err != nil {
 			fmt.Fprintf(os.Stderr, "[SKIPPED] failed to decode meta: %v", err)
 			continue
 		}
 
-		profiles = append(profiles, prof)
+		entries = append(entries, ent)
 	}
 
-	return profiles, nil
+	return entries, nil
 }
 
-func (p *Profile) Path() string {
-	return p.bodyPath
+func (e *Entry) Path() string {
+	return e.bodyPath
 }
 
-func (p *Profile) Fetch(result chan error) {
-	result <- p.fetch()
+func (e *Entry) Fetch(result chan error) {
+	result <- e.fetch()
 }
-func (p *Profile) fetch() error {
-	resp, err := http.Get(fmt.Sprintf("%s?second=%d", p.URL, p.Duration))
+func (e *Entry) fetch() error {
+	resp, err := http.Get(fmt.Sprintf("%s?second=%d", e.URL, e.Duration))
 	if err != nil {
 		return fmt.Errorf("http error: %w", err)
 	}
 	defer resp.Body.Close()
 
-	bodyFile, err := os.Create(p.bodyPath)
+	bodyFile, err := os.Create(e.bodyPath)
 	if err != nil {
 		return fmt.Errorf("failed to create body file: %w", err)
 	}
 	defer bodyFile.Close()
 
-	metaFile, err := os.Create(p.metaPath)
+	metaFile, err := os.Create(e.metaPath)
 	if err != nil {
 		return fmt.Errorf("failed to create meta file: %w", err)
 	}
@@ -118,7 +123,7 @@ func (p *Profile) fetch() error {
 		return fmt.Errorf("failed to write body: %w", err)
 	}
 
-	if err := json.NewEncoder(metaFile).Encode(p); err != nil {
+	if err := json.NewEncoder(metaFile).Encode(e); err != nil {
 		return fmt.Errorf("failed to write meta: %w", err)
 	}
 

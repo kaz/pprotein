@@ -6,13 +6,8 @@ import (
 	"sync"
 
 	"github.com/google/pprof/driver"
+	"github.com/kaz/pprotein/fetch"
 	"github.com/labstack/echo"
-)
-
-const (
-	ProfileStatusOk      ProfileStatus = "ok"
-	ProfileStatusFail    ProfileStatus = "fail"
-	ProfileStatusPending ProfileStatus = "pending"
 )
 
 type (
@@ -20,89 +15,43 @@ type (
 		Workdir string
 	}
 	Handler struct {
-		profiler *Profiler
-		stats    sync.Map
-
-		route   *echo.Group
-		routeMu sync.Mutex
+		store *fetch.Store
 	}
-
-	ProfileStatus string
-	ProfileInfo   struct {
-		Status  ProfileStatus
-		Message string
-		Profile *Profile
-	}
-
-	FetchRequest struct {
-		URL      string
-		Duration int
+	processor struct {
+		route *echo.Group
+		mu    sync.Mutex
 	}
 )
 
-func NewHandlers(config Config) (*Handler, error) {
-	profiler, err := NewProfiler(config.Workdir)
+func RegisterHandlers(g *echo.Group, config Config) error {
+	manager, err := fetch.NewManager(config.Workdir, "pb.gz")
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize profiler: %w", err)
+		return fmt.Errorf("failed to initialize manager: %w", err)
 	}
-	return &Handler{profiler: profiler}, nil
-}
 
-func (h *Handler) Register(g *echo.Group) error {
-	h.route = g
+	proc := &processor{route: g}
+	store, err := fetch.NewStore(manager, proc.process)
+	if err != nil {
+		return fmt.Errorf("failed to initialize store: %w", err)
+	}
 
+	h := &Handler{store: store}
 	g.GET("/profiles", h.profilesGet)
 	g.POST("/profiles", h.profilesPost)
-
-	profiles, err := h.profiler.List()
-	if err != nil {
-		return fmt.Errorf("failed to read profiles: %w", err)
-	}
-
-	for _, p := range profiles {
-		h.parseProfile(p)
-	}
 
 	return nil
 }
 
-func (h *Handler) parseProfile(p *Profile) {
-	h.stats.Store(p.ID, &ProfileInfo{
-		Status:  ProfileStatusPending,
-		Message: "Parsing",
-		Profile: p,
-	})
-
-	ch := make(chan error)
-	go func() {
-		ch <- h.parseProfileSync(p)
-	}()
-	go func() {
-		if err := <-ch; err != nil {
-			h.stats.Store(p.ID, &ProfileInfo{
-				Status:  ProfileStatusFail,
-				Message: err.Error(),
-				Profile: p,
-			})
-			return
-		}
-		h.stats.Store(p.ID, &ProfileInfo{
-			Status:  ProfileStatusOk,
-			Message: "",
-			Profile: p,
-		})
-	}()
-}
-func (h *Handler) parseProfileSync(p *Profile) error {
+func (p *processor) process(e *fetch.Entry) error {
 	registerProfileHandlers := func(args *driver.HTTPServerArgs) error {
 		if args.Hostport != "0:0" {
 			return fmt.Errorf("unxpected hostport: %v", args.Hostport)
 		}
 
-		h.routeMu.Lock()
-		defer h.routeMu.Unlock()
+		p.mu.Lock()
+		defer p.mu.Unlock()
 
-		ig := h.route.Group(getProfilePath(p))
+		ig := p.route.Group(getProfilePath(e))
 		for key, handler := range args.Handlers {
 			ig.Any(key, echo.WrapHandler(handler))
 		}
@@ -113,7 +62,7 @@ func (h *Handler) parseProfileSync(p *Profile) error {
 		Flagset: NewFlagSet([]string{
 			"-no_browser",
 			"-http", "0:0",
-			p.Path(),
+			e.Path(),
 		}),
 		HTTPServer: registerProfileHandlers,
 	}
@@ -123,49 +72,23 @@ func (h *Handler) parseProfileSync(p *Profile) error {
 	}
 	return nil
 }
-func getProfilePath(p *Profile) string {
-	return fmt.Sprintf("/profiles/%s", p.ID)
+func getProfilePath(e *fetch.Entry) string {
+	return fmt.Sprintf("/profiles/%s", e.ID)
 }
 
 func (h *Handler) profilesGet(c echo.Context) error {
-	data := map[string]interface{}{}
-	h.stats.Range(func(key, value interface{}) bool {
-		data[key.(string)] = value
-		return true
-	})
-	return c.JSON(http.StatusOK, data)
+	return c.JSON(http.StatusOK, h.store.Get())
 }
 
 func (h *Handler) profilesPost(c echo.Context) error {
-	req := &FetchRequest{}
+	req := &fetch.AddRequest{}
 	if err := c.Bind(req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 	}
 
-	if req.URL == "" || req.Duration == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "unexpected request format")
+	if err := h.store.Add(req); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to fetch profile: %v", err))
 	}
 
-	p := h.profiler.CreateProfile(req.URL, req.Duration)
-	h.stats.Store(p.ID, &ProfileInfo{
-		Status:  ProfileStatusPending,
-		Message: "Fetching",
-		Profile: p,
-	})
-
-	ch := make(chan error)
-	go p.Fetch(ch)
-	go func() {
-		if err := <-ch; err != nil {
-			h.stats.Store(p.ID, &ProfileInfo{
-				Status:  ProfileStatusFail,
-				Message: err.Error(),
-				Profile: p,
-			})
-			return
-		}
-		h.parseProfile(p)
-	}()
-
-	return c.NoContent(http.StatusNoContent)
+	return c.NoContent(http.StatusAccepted)
 }
