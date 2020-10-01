@@ -1,6 +1,9 @@
 package main
 
 import (
+	"net/http"
+
+	rice "github.com/GeertJohan/go.rice"
 	"github.com/kaz/pprotein/embed"
 	"github.com/kaz/pprotein/pprof"
 	"github.com/labstack/echo"
@@ -10,7 +13,8 @@ func main() {
 	e := echo.New()
 	embed.EnableLogging(e)
 
-	e.Static("/", "./view/dist")
+	view := http.FileServer(rice.MustFindBox("view/dist").HTTPBox())
+	e.GET("/*", echo.WrapHandler(view))
 
 	pprofHandler, err := pprof.NewHandlers(pprof.Config{
 		Workdir: "./tmp/pprof",
