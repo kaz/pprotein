@@ -2,8 +2,11 @@
   <main>
     <header>PProtein ⚙ Manage Panel</header>
     <nav>
-      <router-link to="/pprof" custom v-slot="{ navigate, isActive }">
+      <router-link to="/pprof/" custom v-slot="{ navigate, isActive }">
         <div :class="{ active: isActive }" @click="navigate">PProf</div>
+      </router-link>
+      <router-link to="/httplog/" custom v-slot="{ navigate, isActive }">
+        <div :class="{ active: isActive }" @click="navigate">HTTP Log</div>
       </router-link>
     </nav>
     <router-view />
@@ -14,6 +17,7 @@
 * {
   font-size: 14px;
   font-family: "Courier Prime", monospace;
+  box-sizing: border-box;
 }
 body,
 html {

@@ -27,7 +27,7 @@
       <tbody>
         <tr :key="info.Entry.ID" v-for="info in $store.state.remote[$props.endpoint]">
           <td>
-            <router-link v-if="info.Status == `ok`" :to="`/pprof/${info.Entry.ID}`">Open</router-link>
+            <router-link v-if="info.Status == `ok`" :to="`./${info.Entry.ID}/`">Open</router-link>
           </td>
           <td>{{ info.Entry.Datetime.toLocaleString() }}</td>
           <td>{{ info.Entry.URL }}</td>
