@@ -20,7 +20,7 @@ func main() {
 	e.GET("/*", echo.WrapHandler(view))
 
 	pprofCfg := pprof.Config{
-		Workdir: "./tmp/pprof",
+		Workdir: "./data/pprof",
 	}
 	if err := pprof.RegisterHandlers(e.Group("/api/pprof"), pprofCfg); err != nil {
 		panic(err)
@@ -32,7 +32,7 @@ func main() {
 	}
 
 	httplogCfg := httplog.Config{
-		Workdir:  "./tmp/httplog",
+		Workdir:  "./data/httplog",
 		Kataribe: kataribeCfg,
 	}
 	if err := httplog.RegisterHandlers(e.Group("/api/httplog"), httplogCfg); err != nil {
