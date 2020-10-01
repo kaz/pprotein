@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -31,6 +32,10 @@ func (h *TailHandler) Handle(c echo.Context) error {
 		Follow:    true,
 		ReOpen:    true,
 		MustExist: true,
+		Location: &tail.SeekInfo{
+			Offset: 0,
+			Whence: os.SEEK_END,
+		},
 	})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to start tailing: %v", err))
