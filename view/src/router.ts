@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
-import PProf from "./components/PProf.vue";
-import PProfInternal from "./components/PProfInternal.vue";
+import PProfList from "./components/PProfList.vue";
+import PProfEntry from "./components/PProfEntry.vue";
 
 export default createRouter({
 	history: createWebHashHistory(),
@@ -12,17 +12,17 @@ export default createRouter({
 		},
 		{
 			path: "/pprof",
-			component: PProf,
+			component: PProfList,
 			meta: {
 				title: "PProf",
 			},
 		},
 		{
 			path: "/pprof/:id",
-			component: PProfInternal,
+			component: PProfEntry,
 			meta: {
-				title: "Profile {{id}}",
+				title: "PProf {{id}}",
 			},
-		}
+		},
 	],
 });

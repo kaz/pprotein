@@ -12,13 +12,19 @@ type EntryInfo = {
 	};
 };
 
+type AddRequest = {
+	endpoint: string;
+	URL: string;
+	Duration: number;
+};
+
 export default new Vuex.Store({
 	state: {
-		profiles: [] as EntryInfo[],
+		remote: {} as { [key: string]: EntryInfo[]; }
 	},
 	mutations: {
-		setProfiles(state, profiles: { [key: string]: EntryInfo; }) {
-			state.profiles = Object.values(profiles)
+		setStoreData(state, { endpoint, entries }) {
+			state.remote[endpoint] = Object.values(entries as EntryInfo[])
 				.map(e => {
 					e.Entry.Datetime = new Date(e.Entry.Datetime);
 					return e;
@@ -27,8 +33,8 @@ export default new Vuex.Store({
 		}
 	},
 	actions: {
-		async updateProfiles({ commit }) {
-			const resp = await fetch("/api/pprof/profiles");
+		async syncStoreData({ commit }, { endpoint }) {
+			const resp = await fetch(`/api/${endpoint}`);
 
 			if (resp instanceof Error) {
 				return alert(resp);
@@ -37,7 +43,23 @@ export default new Vuex.Store({
 				return alert("HTTP Error: " + await resp.text());
 			}
 
-			commit("setProfiles", await resp.json());
-		}
+			commit("setStoreData", {
+				endpoint,
+				entries: await resp.json(),
+			});
+		},
+		async postStoreData({ }, { endpoint, URL, Duration }: AddRequest) {
+			const resp = await fetch(`/api/${endpoint}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ URL, Duration }),
+			});
+
+			if (!resp.ok) {
+				alert(await resp.text());
+			}
+		},
 	},
 });

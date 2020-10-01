@@ -3,11 +3,11 @@
     <div class="form">
       <label>
         Source URL<br />
-        <input v-model="url" type="text" size="45" />
+        <input type="text" size="50" v-model="$data.url" />
       </label>
       <label>
         Duration<br />
-        <input v-model.number="duration" type="number" />
+        <input type="number" size="10" v-model.number="$data.duration" />
       </label>
       <label>
         &nbsp;<br />
@@ -25,7 +25,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr :key="info.Entry.ID" v-for="info in $store.state.profiles">
+        <tr :key="info.Entry.ID" v-for="info in $store.state.remote[$props.endpoint]">
           <td>
             <router-link v-if="info.Status == `ok`" :to="`/pprof/${info.Entry.ID}`">Open</router-link>
           </td>
@@ -120,42 +120,38 @@ td {
 import { defineComponent } from "vue";
 
 export default defineComponent({
+  props: {
+    endpoint: String,
+  },
   data() {
     return {
+      url: localStorage.getItem(`url[${this.$props.endpoint}]`) || "http://",
+      duration: localStorage.getItem(`duration[${this.$props.endpoint}]`) || 60,
       timer: -1,
-      url: "",
-      duration: 60,
     };
+  },
+  watch: {
+    url(val) {
+      localStorage.setItem(`url[${this.$props.endpoint}]`, val);
+    },
+    duration(val) {
+      localStorage.setItem(`duration[${this.$props.endpoint}]`, val);
+    },
   },
   methods: {
     async update() {
-      await this.$store.dispatch("updateProfiles");
+      await this.$store.dispatch("syncStoreData", { endpoint: this.$props.endpoint });
     },
     async fetch() {
-      localStorage.setItem("saved_url", this.$data.url);
-      localStorage.setItem("saved_duration", this.$data.duration);
-
-      const resp = await fetch("/api/pprof/profiles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          URL: this.$data.url,
-          Duration: this.$data.duration,
-        }),
+      await this.$store.dispatch("postStoreData", {
+        endpoint: this.$props.endpoint,
+        URL: this.$data.url,
+        Duration: parseInt(this.$data.duration),
       });
-
-      if (!resp.ok) {
-        alert(await resp.text());
-      }
       await this.update();
     },
   },
   async beforeMount() {
-    this.$data.url = localStorage.getItem("saved_url") || "";
-    this.$data.duration = parseInt(localStorage.getItem("saved_duration")) || 60;
-
     await this.update();
     this.$data.timer = setInterval(this.update, 2048);
   },
