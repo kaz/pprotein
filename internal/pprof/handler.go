@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/google/pprof/driver"
-	"github.com/kaz/pprotein/fetch"
+	"github.com/kaz/pprotein/internal/fetch"
 	"github.com/labstack/echo/v4"
 )
 

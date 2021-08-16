@@ -7,10 +7,10 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/kaz/kataribe"
-	"github.com/kaz/pprotein/httplog"
 	"github.com/kaz/pprotein/integration/echov4"
-	"github.com/kaz/pprotein/pprof"
-	"github.com/kaz/pprotein/slowlog"
+	"github.com/kaz/pprotein/internal/httplog"
+	"github.com/kaz/pprotein/internal/pprof"
+	"github.com/kaz/pprotein/internal/slowlog"
 	"github.com/labstack/echo/v4"
 )
 

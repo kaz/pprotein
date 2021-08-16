@@ -1,29 +1,25 @@
-package httplog
+package slowlog
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
-	"os"
+	"os/exec"
 	"sync"
 
-	"github.com/kaz/kataribe"
-	"github.com/kaz/pprotein/fetch"
+	"github.com/kaz/pprotein/internal/fetch"
 	"github.com/labstack/echo/v4"
 )
 
 type (
 	Config struct {
-		Workdir  string
-		Kataribe kataribe.Config
+		Workdir string
 	}
 	Handler struct {
 		store *fetch.Store
 		proc  *processor
 	}
 	processor struct {
-		store  sync.Map
-		config kataribe.Config
+		store sync.Map
 	}
 )
 
@@ -33,7 +29,7 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 		return fmt.Errorf("failed to initialize manager: %w", err)
 	}
 
-	proc := &processor{config: config.Kataribe}
+	proc := &processor{}
 	store, err := fetch.NewStore(manager, proc.process)
 	if err != nil {
 		return fmt.Errorf("failed to initialize store: %w", err)
@@ -48,18 +44,13 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 }
 
 func (p *processor) process(e *fetch.Entry) error {
-	file, err := os.Open(e.Path())
+	cmd := exec.Command("pt-query-digest", "--limit", "100%", "--output", "json", e.Path())
+	out, err := cmd.Output()
 	if err != nil {
-		return fmt.Errorf("failed to open log: %w", err)
-	}
-	defer file.Close()
-
-	buf := bytes.NewBuffer(nil)
-	if err := kataribe.New(file, p.config).Print(buf); err != nil {
-		return fmt.Errorf("failed to parse log: %w", err)
+		return fmt.Errorf("failed to exec pt-query-digest: %w", err)
 	}
 
-	p.store.Store(e.ID, buf.Bytes())
+	p.store.Store(e.ID, out)
 	return nil
 }
 
@@ -85,5 +76,5 @@ func (h *Handler) logsIdGet(c echo.Context) error {
 	if !ok {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
-	return c.Blob(http.StatusOK, "text/plain", data.([]byte))
+	return c.Blob(http.StatusOK, "application/json", data.([]byte))
 }
