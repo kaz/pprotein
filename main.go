@@ -1,35 +1,40 @@
 package main
 
 import (
+	"embed"
+	"io/fs"
 	"net/http"
 
 	"github.com/BurntSushi/toml"
-	rice "github.com/GeertJohan/go.rice"
 	"github.com/kaz/kataribe"
-	"github.com/kaz/pprotein/embed"
 	"github.com/kaz/pprotein/httplog"
 	"github.com/kaz/pprotein/pprof"
 	"github.com/kaz/pprotein/slowlog"
 	"github.com/labstack/echo/v4"
 )
 
-func main() {
-	e := echo.New()
-	embed.EnableLogging(e)
+//go:embed view/dist/*
+var view embed.FS
 
-	view := http.FileServer(rice.MustFindBox("view/dist").HTTPBox())
-	e.GET("/*", echo.WrapHandler(view))
+func start() error {
+	e := echo.New()
+
+	subfs, err := fs.Sub(view, "view/dist")
+	if err != nil {
+		return err
+	}
+	e.GET("/*", echo.WrapHandler(http.FileServer(http.FS(subfs))))
 
 	pprofCfg := pprof.Config{
 		Workdir: "./data/pprof",
 	}
 	if err := pprof.RegisterHandlers(e.Group("/api/pprof"), pprofCfg); err != nil {
-		panic(err)
+		return err
 	}
 
 	kataribeCfg := kataribe.Config{}
 	if _, err := toml.DecodeFile("./kataribe.toml", &kataribeCfg); err != nil {
-		panic(err)
+		return err
 	}
 
 	httplogCfg := httplog.Config{
@@ -37,15 +42,21 @@ func main() {
 		Kataribe: kataribeCfg,
 	}
 	if err := httplog.RegisterHandlers(e.Group("/api/httplog"), httplogCfg); err != nil {
-		panic(err)
+		return err
 	}
 
 	slowlogCfg := slowlog.Config{
 		Workdir: "./data/slowlog",
 	}
 	if err := slowlog.RegisterHandlers(e.Group("/api/slowlog"), slowlogCfg); err != nil {
-		panic(err)
+		return err
 	}
 
-	panic(e.Start(":9000"))
+	return e.Start(":9000")
+}
+
+func main() {
+	if err := start(); err != nil {
+		panic(err)
+	}
 }
