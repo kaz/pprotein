@@ -8,6 +8,9 @@
       <router-link to="/httplog/" custom v-slot="{ navigate, isActive }">
         <div :class="{ active: isActive }" @click="navigate">HTTP Log</div>
       </router-link>
+      <router-link to="/slowlog/" custom v-slot="{ navigate, isActive }">
+        <div :class="{ active: isActive }" @click="navigate">Slow Log</div>
+      </router-link>
     </nav>
     <router-view />
   </main>
@@ -27,8 +30,6 @@ html {
 main {
   display: flex;
   flex-direction: column;
-  width: 100vw;
-  height: 100vh;
 }
 header {
   padding: 1em 2em;
@@ -37,7 +38,6 @@ header {
 }
 nav {
   display: flex;
-  width: 100vw;
   background-color: #333;
   color: #fff;
   div {

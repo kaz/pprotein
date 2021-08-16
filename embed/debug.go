@@ -16,6 +16,7 @@ func EnableLogTransport(e *echo.Echo) {
 	g := e.Group("/debug/log")
 	g.Any("/app", transport.NewTailHandler("./app.log").Handle)
 	g.Any("/nginx", transport.NewTailHandler("/var/log/nginx/access.log").Handle)
+	g.Any("/mysql", transport.NewTailHandler("/var/log/mysql/mysql-slow.log").Handle)
 }
 
 func EnablePProf(e *echo.Echo) {

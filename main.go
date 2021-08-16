@@ -8,6 +8,7 @@ import (
 	"github.com/kaz/kataribe"
 	"github.com/kaz/pprotein/embed"
 	"github.com/kaz/pprotein/httplog"
+	"github.com/kaz/pprotein/slowlog"
 	"github.com/kaz/pprotein/pprof"
 	"github.com/labstack/echo"
 )
@@ -36,6 +37,13 @@ func main() {
 		Kataribe: kataribeCfg,
 	}
 	if err := httplog.RegisterHandlers(e.Group("/api/httplog"), httplogCfg); err != nil {
+		panic(err)
+	}
+
+	slowlogCfg := slowlog.Config{
+		Workdir:  "./data/slowlog",
+	}
+	if err := slowlog.RegisterHandlers(e.Group("/api/slowlog"), slowlogCfg); err != nil {
 		panic(err)
 	}
 
