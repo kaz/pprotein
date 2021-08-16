@@ -1,7 +1,11 @@
+import vue from "@vitejs/plugin-vue";
 import { UserConfig } from "vite";
 
 export default {
-	proxy: {
-		"/api": "http://localhost:9000",
-	},
+  plugins: [vue()],
+  server: {
+    proxy: {
+      "/api": "http://localhost:9000",
+    },
+  },
 } as UserConfig;

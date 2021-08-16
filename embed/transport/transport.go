@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/hpcloud/tail"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 type (

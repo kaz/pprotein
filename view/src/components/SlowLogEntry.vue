@@ -1,11 +1,11 @@
 <template>
   <div>
-    <pre v-if="!slowData">{{ $data.summary }}</pre>
-    <div class="container" v-else>
+    <pre v-if="!slowData.global">{{ $data.summary }}</pre>
+    <div v-else class="container">
       <div>
         <h3>全体統計</h3>
-        <div>クエリ数: {{slowData.global.query_count}}</div>
-        <div>ユニーククエリ数: {{slowData.global.unique_query_count}}</div>
+        <div>クエリ数: {{ slowData?.global?.query_count }}</div>
+        <div>ユニーククエリ数: {{ slowData?.global?.unique_query_count }}</div>
         <table border="1">
           <thead>
             <tr>
@@ -20,9 +20,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, key) in slowData.global.metrics" :key="key">
-              <td>{{key}}</td>
-              <td v-for="val in Object.values(row)">{{val}}</td>
+            <tr v-for="(row, key) in slowData?.global?.metrics" :key="key">
+              <td>{{ key }}</td>
+              <td v-for="(val, idx) in Object.values(row)" :key="idx">
+                {{ val }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -30,29 +32,63 @@
       <div>
         <h3>クエリ統計</h3>
         <div>
-          <label><input type="radio" id="total_time" value="total_time" v-model="sort">合計時間</label>
-          <label><input type="radio" id="count" value="count" v-model="sort">クエリ回数</label>
-          <label><input type="radio" id="avg_time" value="avg_time" v-model="sort">平均時間</label>
-          <label><input type="radio" id="rows_s/e" value="rows_s/e" v-model="sort">行効率</label>
+          <label
+            ><input
+              id="total_time"
+              v-bind="inputAttrs('total_time')"
+              type="radio"
+              value="total_time"
+            />合計時間</label
+          >
+          <label
+            ><input
+              id="count"
+              v-bind="inputAttrs('count')"
+              type="radio"
+              value="count"
+            />クエリ回数</label
+          >
+          <label
+            ><input
+              id="avg_time"
+              v-bind="inputAttrs('avg_time')"
+              type="radio"
+              value="avg_time"
+            />平均時間</label
+          >
+          <label
+            ><input
+              id="rows_s/e"
+              v-bind="inputAttrs('rows_s/e')"
+              type="radio"
+              value="rows_s/e"
+            />行効率</label
+          >
         </div>
         <div v-for="queryClass in classes" :key="queryClass.checksum">
           <details>
-            <summary>{{queryClass.fingerprint}}</summary>
+            <summary>{{ queryClass.fingerprint }}</summary>
             <div>
-              <div>クエリ数: {{queryClass.query_count}}</div>
-              <button @click="copy(queryClass.example.query)">サンプルクエリのコピー</button>
+              <div>クエリ数: {{ queryClass.query_count }}</div>
+              <button @click="copy(queryClass.example.query)">
+                サンプルクエリのコピー
+              </button>
               <table border="1">
                 <thead>
-                <tr>
-                  <th>項目</th>
-                  <th v-for="key in queryMetricsColKeys" :key="key">{{key}}</th>
-                </tr>
+                  <tr>
+                    <th>項目</th>
+                    <th v-for="key in queryMetricsColKeys" :key="key">
+                      {{ key }}
+                    </th>
+                  </tr>
                 </thead>
                 <tbody>
-                <tr v-for="key in queryMetricsRowKeys" :key="key">
-                  <td>{{key}}</td>
-                  <td v-for="colKey in queryMetricsColKeys">{{queryClass.metrics[key][colKey]}}</td>
-                </tr>
+                  <tr v-for="key in queryMetricsRowKeys" :key="key">
+                    <td>{{ key }}</td>
+                    <td v-for="colKey in queryMetricsColKeys" :key="colKey">
+                      {{ queryClass.metrics[key][colKey] }}
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -62,6 +98,93 @@
     </div>
   </div>
 </template>
+
+<script lang="ts">
+import { defineComponent } from "vue";
+import { Class, Metrics, MetricsRow, QueryDigest } from "../query-digest";
+
+export default defineComponent({
+  data() {
+    return {
+      summary: "Loading ...",
+      slowData: {} as QueryDigest,
+      sort: "total_time",
+      queryMetricsRowKeys: [
+        "Lock_time",
+        "Query_length",
+        "Query_time",
+        "Rows_examined",
+        "Rows_sent",
+      ] as Array<keyof Metrics>,
+      queryMetricsColKeys: [
+        "sum",
+        "avg",
+        "max",
+        "median",
+        "min",
+        "pct",
+        "pct_95",
+        "stddev",
+      ] as Array<keyof MetricsRow>,
+    };
+  },
+  computed: {
+    classes() {
+      if (!this.slowData) return [];
+      const arr: Class[] = Array.from(this.slowData.classes);
+      switch (this.sort) {
+        case "count":
+          return arr.sort((a, b) => b.query_count - a.query_count);
+        case "total_time":
+          return arr.sort(
+            (a, b) =>
+              Number(b.metrics.Query_time.sum) -
+              Number(a.metrics.Query_time.sum)
+          );
+        case "avg_time":
+          return arr.sort(
+            (a, b) =>
+              Number(b.metrics.Query_time.avg) -
+              Number(a.metrics.Query_time.avg)
+          );
+        case "rows_s/e":
+          return arr.sort(
+            (a, b) =>
+              Number(a.metrics.Rows_sent.sum) /
+                Number(a.metrics.Rows_examined.sum) -
+              Number(b.metrics.Rows_sent.sum) /
+                Number(b.metrics.Rows_examined.sum)
+          );
+        default:
+          return arr;
+      }
+    },
+  },
+  async beforeCreate() {
+    const resp = await fetch(`/api/slowlog/logs/${this.$route.params.id}`);
+    this.slowData = await resp.json();
+  },
+  methods: {
+    test() {
+      console.log(this.$data.slowData.classes);
+    },
+    copy(text: string) {
+      window.navigator.clipboard.writeText(text);
+    },
+    // このワークアラウンドを利用 https://github.com/johnsoncodehk/volar/issues/369#issuecomment-898250309
+    inputAttrs(value: string) {
+      return {
+        value,
+        checked: this.sort === value,
+        onInput: (e: Event) => {
+          const el = e.target as HTMLInputElement;
+          this.sort = el.value;
+        },
+      };
+    },
+  },
+});
+</script>
 
 <style scoped lang="scss">
 .container {
@@ -73,7 +196,8 @@ table {
   border-collapse: collapse;
 }
 
-td, th {
+td,
+th {
   padding: 4px;
 }
 
@@ -91,61 +215,3 @@ summary {
   overflow: hidden;
 }
 </style>
-
-<script lang="ts">
-import { defineComponent } from "vue";
-
-export default defineComponent({
-  data() {
-    return {
-      summary: "Loading ...",
-      slowData: undefined,
-      sort: 'total_time',
-      queryMetricsRowKeys: {
-        Lock_time: 'Lock_time',
-        Query_length: 'Query_length',
-        Query_time: 'Query_time',
-        Rows_examined: 'Rows_examined',
-        Rows_sent: 'Rows_sent'
-      },
-      queryMetricsColKeys: {
-        sum: 'sum',
-        avg: 'avg',
-        max: 'max',
-        median: 'median',
-        min: 'min',
-        pct: 'pct',
-        pct_95: 'pct_95',
-        stddev: 'stddev'
-      }
-    };
-  },
-  computed: {
-    classes() {
-      if (!this.slowData) return []
-      const arr = [...this.slowData.classes]
-      switch(this.sort) {
-        case 'count':
-          return arr.sort((a, b) => b.query_count - a.query_count)
-        case 'total_time':
-          return arr.sort((a, b) => b.metrics['Query_time']['sum'] - a.metrics['Query_time']['sum'])
-        case 'avg_time':
-          return arr.sort((a, b) => b.metrics['Query_time']['avg'] - a.metrics['Query_time']['avg'])
-        case 'rows_s/e':
-          return arr.sort((a, b) => (a.metrics['Rows_sent']['sum']/a.metrics['Rows_examined']['sum']) - (b.metrics['Rows_sent']['sum']/b.metrics['Rows_examined']['sum']))
-        default:
-          return arr
-      }
-    }
-  },
-  methods: {
-    copy(text: string) {
-      window.navigator.clipboard.writeText(text)
-    }
-  },
-  async beforeCreate() {
-    const resp = await fetch(`/api/slowlog/logs/${this.$route.params.id}`);
-    this.slowData = await resp.json();
-  },
-});
-</script>
