@@ -3,7 +3,7 @@ package slowlog
 import (
 	"fmt"
 	"github.com/kaz/pprotein/fetch"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"os/exec"
 	"sync"
@@ -11,14 +11,14 @@ import (
 
 type (
 	Config struct {
-		Workdir  string
+		Workdir string
 	}
 	Handler struct {
 		store *fetch.Store
 		proc  *processor
 	}
 	processor struct {
-		store  sync.Map
+		store sync.Map
 	}
 )
 

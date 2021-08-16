@@ -8,9 +8,9 @@ import (
 	"github.com/kaz/kataribe"
 	"github.com/kaz/pprotein/embed"
 	"github.com/kaz/pprotein/httplog"
-	"github.com/kaz/pprotein/slowlog"
 	"github.com/kaz/pprotein/pprof"
-	"github.com/labstack/echo"
+	"github.com/kaz/pprotein/slowlog"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
@@ -41,7 +41,7 @@ func main() {
 	}
 
 	slowlogCfg := slowlog.Config{
-		Workdir:  "./data/slowlog",
+		Workdir: "./data/slowlog",
 	}
 	if err := slowlog.RegisterHandlers(e.Group("/api/slowlog"), slowlogCfg); err != nil {
 		panic(err)
