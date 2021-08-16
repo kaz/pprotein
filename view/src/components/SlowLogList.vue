@@ -1,10 +1,10 @@
 <template>
-  <EntryList endpoint="slowlog/logs" />
+  <EntryList endpoint="slowlog" />
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
 import EntryList from "./EntryList.vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   components: {

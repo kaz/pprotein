@@ -36,8 +36,8 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 	}
 
 	h := &Handler{store: store}
-	g.GET("/profiles", h.profilesGet)
-	g.POST("/profiles", h.profilesPost)
+	g.GET("", h.profilesGet)
+	g.POST("", h.profilesPost)
 
 	return store.RegisterHandlers(g)
 }

@@ -1,18 +1,18 @@
 <template>
   <main>
-    <header>PProtein ⚙ Manage Panel</header>
+    <header>pprotein ⚙</header>
     <nav>
       <router-link v-slot="{ navigate, isActive }" to="/" custom>
-        <div :class="{ active: isActive }" @click="navigate">Top</div>
+        <div :class="{ active: isActive }" @click="navigate">top</div>
       </router-link>
       <router-link v-slot="{ navigate, isActive }" to="/pprof/" custom>
-        <div :class="{ active: isActive }" @click="navigate">PProf</div>
+        <div :class="{ active: isActive }" @click="navigate">pprof</div>
       </router-link>
       <router-link v-slot="{ navigate, isActive }" to="/httplog/" custom>
-        <div :class="{ active: isActive }" @click="navigate">HTTP Log</div>
+        <div :class="{ active: isActive }" @click="navigate">httplog</div>
       </router-link>
       <router-link v-slot="{ navigate, isActive }" to="/slowlog/" custom>
-        <div :class="{ active: isActive }" @click="navigate">Slow Log</div>
+        <div :class="{ active: isActive }" @click="navigate">slowlog</div>
       </router-link>
     </nav>
     <router-view />
@@ -20,9 +20,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-
 import "typeface-courier-prime";
+import { defineComponent } from "vue";
 
 type Dict = { [key: string]: string };
 

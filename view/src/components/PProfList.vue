@@ -1,10 +1,10 @@
 <template>
-  <EntryList endpoint="pprof/profiles" />
+  <EntryList endpoint="pprof" />
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
 import EntryList from "./EntryList.vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   components: {

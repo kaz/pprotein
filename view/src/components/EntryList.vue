@@ -9,9 +9,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import PproteinForm from "./PproteinForm.vue";
 import EntriesTable from "./EntriesTable.vue";
+import PproteinForm from "./PproteinForm.vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   components: {
@@ -26,15 +26,20 @@ export default defineComponent({
   },
   data() {
     return {
-      timer: -1,
+      eventSource: null as EventSource | null,
     };
   },
-  async beforeMount() {
-    await this.update();
-    this.$data.timer = setInterval(this.update, 2048);
+  beforeMount() {
+    this.update();
+
+    const eventPath = `/api/${this.$props.endpoint}/events`;
+    this.eventSource = new EventSource(eventPath);
+    this.eventSource.onerror = () =>
+      console.error(`EventSource error: ${eventPath}`);
+    this.eventSource.onmessage = () => this.update();
   },
-  async beforeUnmount() {
-    clearInterval(this.$data.timer);
+  beforeUnmount() {
+    this.eventSource?.close();
   },
   methods: {
     async update() {

@@ -10,7 +10,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="info in $props.entries" :key="info.Entry.ID">
+      <tr v-for="info in visibleEntries" :key="info.Entry.ID">
         <td>
           <router-link
             v-if="info.Status == `ok`"
@@ -31,10 +31,10 @@
 </template>
 
 <script lang="ts">
-import { PropType } from "vue";
 import { EntryInfo } from "../store";
+import { PropType, defineComponent } from "vue";
 
-export default {
+export default defineComponent({
   name: "EntriesTable",
   props: {
     prefix: {
@@ -45,8 +45,19 @@ export default {
       type: Array as PropType<EntryInfo[]>,
       required: true,
     },
+    length: {
+      type: Number,
+      default: undefined,
+    },
   },
-};
+  computed: {
+    visibleEntries() {
+      return this.$props.length
+        ? this.$props.entries.slice(0, this.$props.length)
+        : this.$props.entries;
+    },
+  },
+});
 </script>
 
 <style scoped lang="scss">

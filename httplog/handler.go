@@ -40,9 +40,9 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 	}
 
 	h := &Handler{store: store, proc: proc}
-	g.GET("/logs", h.logsGet)
-	g.POST("/logs", h.logsPost)
-	g.GET("/logs/:id", h.logsIdGet)
+	g.GET("", h.logsGet)
+	g.POST("", h.logsPost)
+	g.GET("/:id", h.logsIdGet)
 
 	return store.RegisterHandlers(g)
 }

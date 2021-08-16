@@ -100,8 +100,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
 import { Class, Metrics, MetricsRow, QueryDigest } from "../query-digest";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   data() {
