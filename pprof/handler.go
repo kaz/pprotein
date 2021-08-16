@@ -39,7 +39,7 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 	g.GET("/profiles", h.profilesGet)
 	g.POST("/profiles", h.profilesPost)
 
-	return nil
+	return store.RegisterHandlers(g)
 }
 
 func (p *processor) process(e *fetch.Entry) error {
