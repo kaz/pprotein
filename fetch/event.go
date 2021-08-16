@@ -21,11 +21,15 @@ func (s *Store) eventsGet(c echo.Context) error {
 	r.Flush()
 
 	for {
-		s.event.L.Lock()
-		s.event.Wait()
-		s.event.L.Unlock()
-
-		fmt.Fprintf(r, "data: \n\n")
-		r.Flush()
+		select {
+		case <-c.Request().Context().Done():
+			return nil
+		default:
+			s.event.L.Lock()
+			s.event.Wait()
+			s.event.L.Unlock()
+			fmt.Fprintf(r, "data: \n\n")
+			r.Flush()
+		}
 	}
 }
