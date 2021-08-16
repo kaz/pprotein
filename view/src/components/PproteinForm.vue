@@ -1,19 +1,59 @@
 <template>
   <div class="form">
     <label>
-      Source URL<br/>
-      <input type="text" size="50" v-model="$data.url"/>
+      Source URL<br />
+      <input v-model="$data.url" type="text" size="50" />
     </label>
     <label>
-      Duration<br/>
-      <input type="number" size="10" v-model.number="$data.duration"/>
+      Duration<br />
+      <input v-model.number="$data.duration" type="number" size="10" />
     </label>
     <label>
-      &nbsp;<br/>
+      &nbsp;<br />
       <button @click="fetch">Fetch</button>
     </label>
   </div>
 </template>
+
+<script lang="ts">
+import { defineComponent } from "vue";
+
+export default defineComponent({
+  name: "PproteinForm",
+  props: {
+    endpoint: {
+      type: String,
+      required: true,
+    },
+  },
+  emits: ["fetch"],
+  data(): { url: string; duration: string } {
+    return {
+      url: localStorage.getItem(`url[${this.$props.endpoint}]`) || "http://",
+      duration:
+        localStorage.getItem(`duration[${this.$props.endpoint}]`) || "60",
+    };
+  },
+  watch: {
+    url(val) {
+      localStorage.setItem(`url[${this.$props.endpoint}]`, val);
+    },
+    duration(val) {
+      localStorage.setItem(`duration[${this.$props.endpoint}]`, val);
+    },
+  },
+  methods: {
+    async fetch() {
+      await this.$store.dispatch("postStoreData", {
+        endpoint: this.$props.endpoint,
+        URL: this.$data.url,
+        Duration: parseInt(this.$data.duration),
+      });
+      this.$emit("fetch");
+    },
+  },
+});
+</script>
 
 <style scoped lang="scss">
 .form {
@@ -36,40 +76,6 @@
         outline: 0;
       }
     }
-
   }
 }
 </style>
-
-<script lang="ts">
-export default {
-  name: 'PproteinForm',
-  props: {
-    endpoint: String
-  },
-  data() {
-    return {
-      url: localStorage.getItem(`url[${this.$props.endpoint}]`) || "http://",
-      duration: localStorage.getItem(`duration[${this.$props.endpoint}]`) || 60,
-    };
-  },
-  methods: {
-    async fetch() {
-      await this.$store.dispatch("postStoreData", {
-        endpoint: this.$props.endpoint,
-        URL: this.$data.url,
-        Duration: parseInt(this.$data.duration),
-      });
-      this.$emit("fetch");
-    },
-  },
-  watch: {
-    url(val) {
-      localStorage.setItem(`url[${this.$props.endpoint}]`, val);
-    },
-    duration(val) {
-      localStorage.setItem(`duration[${this.$props.endpoint}]`, val);
-    },
-  },
-}
-</script>
