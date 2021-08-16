@@ -8,6 +8,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/kaz/kataribe"
 	"github.com/kaz/pprotein/httplog"
+	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/kaz/pprotein/pprof"
 	"github.com/kaz/pprotein/slowlog"
 	"github.com/labstack/echo/v4"
@@ -18,6 +19,7 @@ var view embed.FS
 
 func start() error {
 	e := echo.New()
+	echov4.Integrate(e)
 
 	subfs, err := fs.Sub(view, "view/dist")
 	if err != nil {
