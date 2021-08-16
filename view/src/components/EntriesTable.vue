@@ -1,30 +1,53 @@
 <template>
   <table>
     <thead>
-    <tr>
-      <th>Open</th>
-      <th>Datetime</th>
-      <th>Source URL</th>
-      <th>Duration</th>
-      <th>Status</th>
-    </tr>
+      <tr>
+        <th>Open</th>
+        <th>Datetime</th>
+        <th>Source URL</th>
+        <th>Duration</th>
+        <th>Status</th>
+      </tr>
     </thead>
     <tbody>
-    <tr :key="info.Entry.ID" v-for="info in $props.entries">
-      <td>
-        <router-link v-if="info.Status == `ok`" :to="`${$props.prefix ? $props.prefix : '.'}/${info.Entry.ID}/`">Open</router-link>
-      </td>
-      <td>{{ info.Entry.Datetime.toLocaleString() }}</td>
-      <td>{{ info.Entry.URL }}</td>
-      <td>{{ info.Entry.Duration }}</td>
-      <td>
-        <div :class="`cell ${info.Status}`"></div>
-        {{ info.Message || info.Status }}
-      </td>
-    </tr>
+      <tr v-for="info in $props.entries" :key="info.Entry.ID">
+        <td>
+          <router-link
+            v-if="info.Status == `ok`"
+            :to="`${$props.prefix}/${info.Entry.ID}/`"
+            >Open</router-link
+          >
+        </td>
+        <td>{{ info.Entry.Datetime.toLocaleString() }}</td>
+        <td>{{ info.Entry.URL }}</td>
+        <td>{{ info.Entry.Duration }}</td>
+        <td>
+          <div :class="`cell ${info.Status}`"></div>
+          {{ info.Message || info.Status }}
+        </td>
+      </tr>
     </tbody>
   </table>
 </template>
+
+<script lang="ts">
+import { PropType } from "vue";
+import { EntryInfo } from "../store";
+
+export default {
+  name: "EntriesTable",
+  props: {
+    prefix: {
+      type: String,
+      default: ".",
+    },
+    entries: {
+      type: Array as PropType<EntryInfo[]>,
+      required: true,
+    },
+  },
+};
+</script>
 
 <style scoped lang="scss">
 table {
@@ -66,13 +89,3 @@ td {
   }
 }
 </style>
-
-<script lang="ts">
-export default {
-  name: 'EntriesTable',
-  props: {
-    prefix: String,
-    entries: Array,
-  },
-}
-</script>

@@ -2,22 +2,46 @@
   <main>
     <header>PProtein ⚙ Manage Panel</header>
     <nav>
-      <router-link to="/" custom v-slot="{ navigate, isActive }">
+      <router-link v-slot="{ navigate, isActive }" to="/" custom>
         <div :class="{ active: isActive }" @click="navigate">Top</div>
       </router-link>
-      <router-link to="/pprof/" custom v-slot="{ navigate, isActive }">
+      <router-link v-slot="{ navigate, isActive }" to="/pprof/" custom>
         <div :class="{ active: isActive }" @click="navigate">PProf</div>
       </router-link>
-      <router-link to="/httplog/" custom v-slot="{ navigate, isActive }">
+      <router-link v-slot="{ navigate, isActive }" to="/httplog/" custom>
         <div :class="{ active: isActive }" @click="navigate">HTTP Log</div>
       </router-link>
-      <router-link to="/slowlog/" custom v-slot="{ navigate, isActive }">
+      <router-link v-slot="{ navigate, isActive }" to="/slowlog/" custom>
         <div :class="{ active: isActive }" @click="navigate">Slow Log</div>
       </router-link>
     </nav>
     <router-view />
   </main>
 </template>
+
+<script lang="ts">
+import { defineComponent } from "vue";
+
+import "typeface-courier-prime";
+
+type Dict = { [key: string]: string };
+
+export default defineComponent({
+  watch: {
+    $route({ params, meta }) {
+      document.title = `${this.getTitle(params, meta)} | PProtein`;
+    },
+  },
+  methods: {
+    getTitle(params: Dict, meta: Dict) {
+      return Object.entries(params).reduce(
+        (title, [key, val]) => title.replace(`{{${key}}}`, val),
+        meta.title || ""
+      );
+    },
+  },
+});
+</script>
 
 <style lang="scss">
 * {
@@ -72,24 +96,3 @@ button {
   }
 }
 </style>
-
-<script lang="ts">
-import { defineComponent } from "vue";
-
-import "typeface-courier-prime";
-
-type Dict = { [key: string]: string };
-
-export default defineComponent({
-  methods: {
-    getTitle(params: Dict, meta: Dict) {
-      return Object.entries(params).reduce((title, [key, val]) => title.replace(`{{${key}}}`, val), meta.title || "");
-    },
-  },
-  watch: {
-    $route({ params, meta }) {
-      document.title = `${this.getTitle(params, meta)} | PProtein`;
-    },
-  },
-});
-</script>
