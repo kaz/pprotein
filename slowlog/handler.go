@@ -2,11 +2,12 @@ package slowlog
 
 import (
 	"fmt"
-	"github.com/kaz/pprotein/fetch"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"os/exec"
 	"sync"
+
+	"github.com/kaz/pprotein/fetch"
+	"github.com/labstack/echo/v4"
 )
 
 type (
@@ -39,7 +40,7 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 	g.POST("/logs", h.logsPost)
 	g.GET("/logs/:id", h.logsIdGet)
 
-	return nil
+	return store.RegisterHandlers(g)
 }
 
 func (p *processor) process(e *fetch.Entry) error {

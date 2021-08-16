@@ -44,7 +44,7 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 	g.POST("/logs", h.logsPost)
 	g.GET("/logs/:id", h.logsIdGet)
 
-	return nil
+	return store.RegisterHandlers(g)
 }
 
 func (p *processor) process(e *fetch.Entry) error {

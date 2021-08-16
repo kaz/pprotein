@@ -16,7 +16,9 @@ type (
 		manager   *Manager
 		processor ProcessFn
 
-		store sync.Map
+		mu    *sync.RWMutex
+		data  map[string]*EntryInfo
+		event *sync.Cond
 	}
 
 	ProcessFn func(*Entry) error
@@ -39,6 +41,11 @@ func NewStore(manager *Manager, processor ProcessFn) (*Store, error) {
 	s := &Store{
 		manager:   manager,
 		processor: processor,
+
+		mu:   &sync.RWMutex{},
+		data: map[string]*EntryInfo{},
+
+		event: sync.NewCond(&sync.Mutex{}),
 	}
 
 	entries, err := s.manager.List()
@@ -54,11 +61,16 @@ func NewStore(manager *Manager, processor ProcessFn) (*Store, error) {
 }
 
 func (s *Store) updateStatus(e *Entry, status Status, msg string) {
-	s.store.Store(e.ID, &EntryInfo{
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data[e.ID] = &EntryInfo{
 		Status:  status,
 		Message: msg,
 		Entry:   e,
-	})
+	}
+
+	s.event.Broadcast()
 }
 
 func (s *Store) parse(e *Entry) {
@@ -78,12 +90,10 @@ func (s *Store) parse(e *Entry) {
 }
 
 func (s *Store) Get() map[string]*EntryInfo {
-	data := map[string]*EntryInfo{}
-	s.store.Range(func(key, value interface{}) bool {
-		data[key.(string)] = value.(*EntryInfo)
-		return true
-	})
-	return data
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.data
 }
 
 func (s *Store) Add(req *AddRequest) error {
