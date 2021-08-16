@@ -10,7 +10,6 @@ export default defineComponent({});
 
 <style scoped lang="scss">
 iframe {
-  width: 100vw;
   flex: 1 0 auto;
 }
 </style>

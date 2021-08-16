@@ -12,7 +12,7 @@ export default defineComponent({
     };
   },
   async beforeCreate() {
-    const resp = await fetch(`/api/httplog/logs/${this.$route.params.id}`);
+    const resp = await fetch(`/api/httplog/${this.$route.params.id}`);
     this.$data.summary = await resp.text();
   },
 });
@@ -23,7 +23,6 @@ pre {
   margin: 0;
   padding: 2em;
   overflow: auto;
-  width: 100vw;
   flex: 1 0 auto;
 }
 </style>

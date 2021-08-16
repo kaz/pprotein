@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <section>
     <pre v-if="!slowData.global">{{ $data.summary }}</pre>
     <div v-else class="container">
       <div>
@@ -96,7 +96,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script lang="ts">
@@ -161,7 +161,7 @@ export default defineComponent({
     },
   },
   async beforeCreate() {
-    const resp = await fetch(`/api/slowlog/logs/${this.$route.params.id}`);
+    const resp = await fetch(`/api/slowlog/${this.$route.params.id}`);
     this.slowData = await resp.json();
   },
   methods: {
