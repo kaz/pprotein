@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
+import Index from "./components/Index.vue";
 import PProfList from "./components/PProfList.vue";
 import PProfEntry from "./components/PProfEntry.vue";
 import HttpLogList from "./components/HttpLogList.vue";
@@ -12,7 +13,10 @@ export default createRouter({
 	routes: [
 		{
 			path: "/",
-			redirect: "/pprof/"
+            component: Index,
+			meta: {
+				title: "Top",
+			},
 		},
 		{
 			path: "/pprof/",

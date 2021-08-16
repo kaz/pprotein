@@ -2,6 +2,9 @@
   <main>
     <header>PProtein ⚙ Manage Panel</header>
     <nav>
+      <router-link to="/" custom v-slot="{ navigate, isActive }">
+        <div :class="{ active: isActive }" @click="navigate">Top</div>
+      </router-link>
       <router-link to="/pprof/" custom v-slot="{ navigate, isActive }">
         <div :class="{ active: isActive }" @click="navigate">PProf</div>
       </router-link>
@@ -51,6 +54,22 @@ nav {
 }
 section {
   padding: 1em 2em;
+}
+
+button {
+  padding: 0.4em 1em;
+  background-color: white;
+  border: 1px solid lightgray;
+  cursor: pointer;
+
+  &:hover {
+    border-color: orangered;
+  }
+
+  &:active {
+    color: white;
+    background-color: orangered;
+  }
 }
 </style>
 
