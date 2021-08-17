@@ -28,6 +28,13 @@ type (
 	}
 )
 
+func (s *Snapshot) Prune() error {
+	if err := os.RemoveAll(path.Dir(s.Body)); err != nil {
+		return fmt.Errorf("failed to remove directory: %w", err)
+	}
+	return nil
+}
+
 func (s *Snapshot) Collect() error {
 	resp, err := http.Get(fmt.Sprintf("%s?seconds=%d", s.URL, s.Duration))
 	if err != nil {

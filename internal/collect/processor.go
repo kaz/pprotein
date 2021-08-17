@@ -37,7 +37,7 @@ func (p *cachedProcessor) serveCached(snapshot *Snapshot) (io.ReadCloser, error)
 func (p *cachedProcessor) serveGenerated(snapshot *Snapshot) (io.ReadCloser, error) {
 	r, err := p.internal.Process(snapshot)
 	if err != nil {
-		return nil, fmt.Errorf("internal processor returns an error: %w", err)
+		return nil, fmt.Errorf("internal error: %w", err)
 	}
 
 	if !p.internal.Cacheable() {
