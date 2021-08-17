@@ -1,12 +1,15 @@
 package collect
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -36,11 +39,21 @@ func (s *Snapshot) Prune() error {
 }
 
 func (s *Snapshot) Collect() error {
-	resp, err := http.Get(fmt.Sprintf("%s?seconds=%d", s.URL, s.Duration))
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s?seconds=%d", s.URL, s.Duration), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("http error: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("http error: status=%v", resp.StatusCode)
+	}
 
 	if err := os.Mkdir(path.Dir(s.Body), 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
@@ -58,7 +71,23 @@ func (s *Snapshot) Collect() error {
 	}
 	defer metaFile.Close()
 
-	if _, err := io.Copy(bodyFile, resp.Body); err != nil {
+	var r io.Reader = resp.Body
+	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
+		cr, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to initialize gzip reader: %w", err)
+		}
+		defer cr.Close()
+
+		r = cr
+	} else if strings.Contains(resp.Header.Get("Content-Encoding"), "deflate") {
+		cr := flate.NewReader(resp.Body)
+		defer cr.Close()
+
+		r = cr
+	}
+
+	if _, err := io.Copy(bodyFile, r); err != nil {
 		return fmt.Errorf("failed to write body: %w", err)
 	}
 
