@@ -7,8 +7,8 @@ import (
 
 	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/kaz/pprotein/internal/extproc/kataribe"
+	"github.com/kaz/pprotein/internal/extproc/querydigest"
 	"github.com/kaz/pprotein/internal/pprof"
-	"github.com/kaz/pprotein/internal/slowlog"
 	"github.com/labstack/echo/v4"
 )
 
@@ -31,7 +31,7 @@ func start() error {
 	if err := kataribe.RegisterHandlers(e.Group("/api/httplog"), kataribe.Config{Workdir: "./data/httplog"}); err != nil {
 		return err
 	}
-	if err := slowlog.RegisterHandlers(e.Group("/api/slowlog"), slowlog.Config{Workdir: "./data/slowlog"}); err != nil {
+	if err := querydigest.RegisterHandlers(e.Group("/api/slowlog"), querydigest.Config{Workdir: "./data/slowlog"}); err != nil {
 		return err
 	}
 
