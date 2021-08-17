@@ -1,13 +1,15 @@
 package tail
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
-
-	"github.com/hpcloud/tail"
 )
 
 type (
@@ -32,33 +34,59 @@ func (h *TailHandler) serve(w http.ResponseWriter, r *http.Request) error {
 		seconds = 30
 	}
 
-	f, ok := w.(http.Flusher)
-	if !ok {
-		return fmt.Errorf("type conversion failed")
-	}
-
-	t, err := tail.TailFile(h.filename, tail.Config{
-		Follow:    true,
-		ReOpen:    true,
-		MustExist: true,
-		Location: &tail.SeekInfo{
-			Offset: 0,
-			Whence: os.SEEK_END,
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to start tail: %w", err)
-	}
-	defer t.Cleanup()
-
-	timer := time.NewTimer(time.Duration(seconds) * time.Second)
-	for {
-		select {
-		case <-timer.C:
-			return nil
-		case line := <-t.Lines:
-			fmt.Fprintln(w, line.Text)
-			f.Flush()
+	var output io.Writer = w
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		ew, err := gzip.NewWriterLevel(w, gzip.DefaultCompression)
+		if err != nil {
+			return fmt.Errorf("failed to initialize gzip writer: %w", err)
 		}
+		defer ew.Close()
+
+		output = ew
+		w.Header().Set("Content-Encoding", "gzip")
+	} else if strings.Contains(r.Header.Get("Accept-Encoding"), "deflate") {
+		ew, err := flate.NewWriter(w, flate.DefaultCompression)
+		if err != nil {
+			return fmt.Errorf("failed to initialize deflate writer: %w", err)
+		}
+		defer ew.Close()
+
+		output = ew
+		w.Header().Set("Content-Encoding", "deflate")
 	}
+
+	if err := h.tail(output, time.Duration(seconds)*time.Second); err != nil {
+		return fmt.Errorf("failed to tail: %w", err)
+	}
+
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+	return nil
+}
+
+func (h *TailHandler) tail(w io.Writer, duration time.Duration) error {
+	file, err := os.Open(h.filename)
+	if err != nil {
+		return fmt.Errorf("failed to open: %w", err)
+	}
+	defer file.Close()
+
+	startPos, err := file.Seek(0, io.SeekEnd)
+	if err != nil {
+		return fmt.Errorf("failed to seek: %w", err)
+	}
+
+	time.Sleep(duration)
+
+	finfo, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to stat: %w", err)
+	}
+
+	r := io.LimitReader(file, finfo.Size()-startPos)
+	if _, err := io.Copy(w, r); err != nil {
+		return fmt.Errorf("failed to copy: %w", err)
+	}
+	return nil
 }
