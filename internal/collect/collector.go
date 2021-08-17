@@ -81,9 +81,8 @@ func (c *Collector) runProcessor(snapshot *Snapshot) error {
 
 	r, err := c.processor.Process(snapshot)
 	if err != nil {
-		defer snapshot.Prune()
+		go snapshot.Prune()
 		c.updateStatus(snapshot, StatusFail, err.Error())
-
 		return fmt.Errorf("processor aborted: %w", err)
 	}
 	if r != nil {

@@ -68,14 +68,16 @@ func (s *Storage) List() ([]*Snapshot, error) {
 
 		metaFile, err := os.Open(sPath.Meta)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "[SKIPPED] failed to open meta file: %v", err)
+			go (&Snapshot{SnapshotPath: sPath}).Prune()
+			fmt.Fprintf(os.Stderr, "[!] ignored=%v:failed to open meta file: %v\n", id, err)
 			continue
 		}
 		defer metaFile.Close()
 
 		sMeta := SnapshotMeta{}
 		if err := json.NewDecoder(metaFile).Decode(&sMeta); err != nil {
-			fmt.Fprintf(os.Stderr, "[SKIPPED] failed to decode meta: %v", err)
+			go (&Snapshot{SnapshotPath: sPath}).Prune()
+			fmt.Fprintf(os.Stderr, "[!] ignored=%v:failed to decode meta file: %v\n", id, err)
 			continue
 		}
 

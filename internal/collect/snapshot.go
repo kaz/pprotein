@@ -32,7 +32,7 @@ type (
 )
 
 func (s *Snapshot) Prune() error {
-	if err := os.RemoveAll(path.Dir(s.Body)); err != nil {
+	if err := os.RemoveAll(path.Dir(s.Meta)); err != nil {
 		return fmt.Errorf("failed to remove directory: %w", err)
 	}
 	return nil
@@ -55,21 +55,21 @@ func (s *Snapshot) Collect() error {
 		return fmt.Errorf("http error: status=%v", resp.StatusCode)
 	}
 
-	if err := os.Mkdir(path.Dir(s.Body), 0755); err != nil {
+	if err := os.Mkdir(path.Dir(s.Meta), 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-
-	bodyFile, err := os.Create(s.Body)
-	if err != nil {
-		return fmt.Errorf("failed to create body file: %w", err)
-	}
-	defer bodyFile.Close()
 
 	metaFile, err := os.Create(s.Meta)
 	if err != nil {
 		return fmt.Errorf("failed to create meta file: %w", err)
 	}
 	defer metaFile.Close()
+
+	bodyFile, err := os.Create(s.Body)
+	if err != nil {
+		return fmt.Errorf("failed to create body file: %w", err)
+	}
+	defer bodyFile.Close()
 
 	var r io.Reader = resp.Body
 	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
@@ -87,8 +87,10 @@ func (s *Snapshot) Collect() error {
 		r = cr
 	}
 
-	if _, err := io.Copy(bodyFile, r); err != nil {
+	if written, err := io.Copy(bodyFile, r); err != nil {
 		return fmt.Errorf("failed to write body: %w", err)
+	} else if written == 0 {
+		return fmt.Errorf("empty response")
 	}
 
 	if err := json.NewEncoder(metaFile).Encode(s.SnapshotMeta); err != nil {
