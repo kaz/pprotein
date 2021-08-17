@@ -5,10 +5,8 @@ import (
 	"io/fs"
 	"net/http"
 
-	"github.com/BurntSushi/toml"
-	"github.com/kaz/kataribe"
 	"github.com/kaz/pprotein/integration/echov4"
-	"github.com/kaz/pprotein/internal/httplog"
+	"github.com/kaz/pprotein/internal/extproc/kataribe"
 	"github.com/kaz/pprotein/internal/pprof"
 	"github.com/kaz/pprotein/internal/slowlog"
 	"github.com/labstack/echo/v4"
@@ -27,30 +25,13 @@ func start() error {
 	}
 	e.GET("/*", echo.WrapHandler(http.FileServer(http.FS(subfs))))
 
-	pprofCfg := pprof.Config{
-		Workdir: "./data/pprof",
-	}
-	if err := pprof.RegisterHandlers(e.Group("/api/pprof"), pprofCfg); err != nil {
+	if err := pprof.RegisterHandlers(e.Group("/api/pprof"), pprof.Config{Workdir: "./data/pprof"}); err != nil {
 		return err
 	}
-
-	kataribeCfg := kataribe.Config{}
-	if _, err := toml.DecodeFile("./kataribe.toml", &kataribeCfg); err != nil {
+	if err := kataribe.RegisterHandlers(e.Group("/api/httplog"), kataribe.Config{Workdir: "./data/httplog"}); err != nil {
 		return err
 	}
-
-	httplogCfg := httplog.Config{
-		Workdir:  "./data/httplog",
-		Kataribe: kataribeCfg,
-	}
-	if err := httplog.RegisterHandlers(e.Group("/api/httplog"), httplogCfg); err != nil {
-		return err
-	}
-
-	slowlogCfg := slowlog.Config{
-		Workdir: "./data/slowlog",
-	}
-	if err := slowlog.RegisterHandlers(e.Group("/api/slowlog"), slowlogCfg); err != nil {
+	if err := slowlog.RegisterHandlers(e.Group("/api/slowlog"), slowlog.Config{Workdir: "./data/slowlog"}); err != nil {
 		return err
 	}
 
