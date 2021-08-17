@@ -4,6 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"os"
 
 	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/kaz/pprotein/internal/extproc/kataribe"
@@ -35,7 +36,12 @@ func start() error {
 		return err
 	}
 
-	return e.Start(":9000")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "9000"
+	}
+
+	return e.Start(":" + port)
 }
 
 func main() {
