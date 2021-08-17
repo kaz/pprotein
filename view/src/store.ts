@@ -1,10 +1,9 @@
 import Vuex from "vuex";
 
-type Status = "ok" | "fail" | "pending";
-export type EntryInfo = {
-  Status: Status;
+export type Entry = {
+  Status: "ok" | "fail" | "pending";
   Message: string;
-  Entry: {
+  Snapshot: {
     ID: string;
     Datetime: Date;
     URL: string;
@@ -20,22 +19,26 @@ type AddRequest = {
 
 export default new Vuex.Store({
   state: {
-    remote: {} as { [key: string]: EntryInfo[] },
+    remote: {} as { [key: string]: Entry[] },
   },
   mutations: {
-    setStoreData(state, { endpoint, entries }) {
-      state.remote[endpoint] = Object.values(entries as EntryInfo[])
+    setStoreData(
+      state,
+      { endpoint, entries }: { endpoint: string; entries: Entry[] }
+    ) {
+      state.remote[endpoint] = entries
         .map((e) => {
-          e.Entry.Datetime = new Date(e.Entry.Datetime);
+          e.Snapshot.Datetime = new Date(e.Snapshot.Datetime);
           return e;
         })
         .sort(
-          (a, b) => b.Entry.Datetime.getTime() - a.Entry.Datetime.getTime()
+          (a, b) =>
+            b.Snapshot.Datetime.getTime() - a.Snapshot.Datetime.getTime()
         );
     },
   },
   actions: {
-    async syncStoreData({ commit }, { endpoint }) {
+    async syncStoreData({ commit }, { endpoint }: { endpoint: string }) {
       try {
         const resp = await fetch(`/api/${endpoint}`);
         if (!resp.ok) {

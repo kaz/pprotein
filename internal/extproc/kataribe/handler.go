@@ -22,8 +22,7 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 		return fmt.Errorf("failed to generate kataribe config: %w", err)
 	}
 
-	p := extproc.NewProcessor("kataribe", "-conf", confPath)
-
+	p := &processor{confPath: confPath}
 	if err := extproc.RegisterHandlers(g, extproc.Config{Workdir: config.Workdir, Processor: p}); err != nil {
 		return fmt.Errorf("failed to register extproc handlers: %w", err)
 	}

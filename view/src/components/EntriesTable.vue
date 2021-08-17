@@ -10,20 +10,20 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="info in visibleEntries" :key="info.Entry.ID">
+      <tr v-for="entry in visibleEntries" :key="entry.Snapshot.ID">
         <td>
           <router-link
-            v-if="info.Status == `ok`"
-            :to="`${$props.prefix}/${info.Entry.ID}/`"
+            v-if="entry.Status == `ok`"
+            :to="`${$props.prefix}/${entry.Snapshot.ID}/`"
             >Open</router-link
           >
         </td>
-        <td>{{ info.Entry.Datetime.toLocaleString() }}</td>
-        <td>{{ info.Entry.URL }}</td>
-        <td>{{ info.Entry.Duration }}</td>
+        <td>{{ entry.Snapshot.Datetime.toLocaleString() }}</td>
+        <td>{{ entry.Snapshot.URL }}</td>
+        <td>{{ entry.Snapshot.Duration }}</td>
         <td>
-          <div :class="`cell ${info.Status}`"></div>
-          {{ info.Message || info.Status }}
+          <div :class="`cell ${entry.Status}`"></div>
+          {{ entry.Message || entry.Status }}
         </td>
       </tr>
     </tbody>
@@ -31,7 +31,7 @@
 </template>
 
 <script lang="ts">
-import { EntryInfo } from "../store";
+import { Entry } from "../store";
 import { PropType, defineComponent } from "vue";
 
 export default defineComponent({
@@ -42,7 +42,7 @@ export default defineComponent({
       default: ".",
     },
     entries: {
-      type: Array as PropType<EntryInfo[]>,
+      type: Array as PropType<Entry[]>,
       required: true,
     },
     length: {

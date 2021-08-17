@@ -14,8 +14,7 @@ type (
 )
 
 func RegisterHandlers(g *echo.Group, config Config) error {
-	p := extproc.NewProcessor("pt-query-digest", "--limit", "100%", "--output", "json")
-
+	p := &processor{}
 	if err := extproc.RegisterHandlers(g, extproc.Config{Workdir: config.Workdir, Processor: p}); err != nil {
 		return fmt.Errorf("failed to register extproc handlers: %w", err)
 	}
