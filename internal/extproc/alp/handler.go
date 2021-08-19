@@ -49,7 +49,7 @@ func newHandler(workdir string) (*Handler, error) {
 		return nil, fmt.Errorf("failed to make directory: %w", err)
 	}
 	if err := os.WriteFile(h.confPath, sampleConfig, 0644); err != nil {
-		return nil, fmt.Errorf("failed to generate kataribe config: %w", err)
+		return nil, fmt.Errorf("failed to generate config: %w", err)
 	}
 	return h, nil
 }
