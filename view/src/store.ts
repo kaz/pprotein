@@ -1,4 +1,4 @@
-import Vuex from "vuex";
+import Vuex, { Store } from "vuex";
 
 export type Entry = {
   Status: "ok" | "fail" | "pending";
@@ -11,22 +11,34 @@ export type Entry = {
   };
 };
 
-type AddRequest = {
+type CollectJob = {
   endpoint: string;
   URL: string;
   Duration: number;
 };
 
+const state = {
+  endpoints: ["pprof", "httplog", "slowlog"],
+  entries: {} as { [key: string]: Entry[] },
+};
+
+const syncPlugin = (store: Store<typeof state>) => {
+  const es = new EventSource("/api/event");
+  es.addEventListener("message", ({ data }) => {
+    store.dispatch("sync", { endpoint: data });
+  });
+
+  store.state.endpoints.forEach((endpoint) => {
+    store.dispatch("sync", { endpoint });
+  });
+};
+
 export default new Vuex.Store({
-  state: {
-    remote: {} as { [key: string]: Entry[] },
-  },
+  state,
+  plugins: [syncPlugin],
   mutations: {
-    setStoreData(
-      state,
-      { endpoint, entries }: { endpoint: string; entries: Entry[] }
-    ) {
-      state.remote[endpoint] = entries
+    sync(state, { endpoint, entries }: { endpoint: string; entries: Entry[] }) {
+      state.entries[endpoint] = entries
         .map((e) => {
           e.Snapshot.Datetime = new Date(e.Snapshot.Datetime);
           return e;
@@ -38,14 +50,14 @@ export default new Vuex.Store({
     },
   },
   actions: {
-    async syncStoreData({ commit }, { endpoint }: { endpoint: string }) {
+    async sync({ commit }, { endpoint }: { endpoint: string }) {
       try {
         const resp = await fetch(`/api/${endpoint}`);
         if (!resp.ok) {
           return alert("HTTP Error: " + (await resp.text()));
         }
 
-        commit("setStoreData", {
+        commit("sync", {
           endpoint,
           entries: await resp.json(),
         });
@@ -53,7 +65,7 @@ export default new Vuex.Store({
         return alert(e);
       }
     },
-    async postStoreData(_, { endpoint, URL, Duration }: AddRequest) {
+    async addCollectJob(_, { endpoint, URL, Duration }: CollectJob) {
       const resp = await fetch(`/api/${endpoint}`, {
         method: "POST",
         headers: {

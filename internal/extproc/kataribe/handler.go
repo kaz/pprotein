@@ -8,27 +8,25 @@ import (
 	"os/exec"
 	"path"
 
+	"github.com/kaz/pprotein/internal/collect"
 	"github.com/kaz/pprotein/internal/extproc"
 	"github.com/labstack/echo/v4"
 )
 
 type (
-	Config struct {
-		Workdir string
-	}
 	Handler struct {
 		confPath string
 	}
 )
 
-func RegisterHandlers(g *echo.Group, config Config) error {
-	h, err := newHandler(config)
+func RegisterHandlers(g *echo.Group, opts *collect.Options) error {
+	h, err := newHandler(opts.WorkDir)
 	if err != nil {
 		return fmt.Errorf("failed to initialize handler: %w", err)
 	}
 
 	p := &processor{confPath: h.confPath}
-	if err := extproc.RegisterHandlers(g, extproc.Config{Workdir: config.Workdir, Processor: p}); err != nil {
+	if err := extproc.RegisterHandlers(g, p, opts); err != nil {
 		return fmt.Errorf("failed to register extproc handlers: %w", err)
 	}
 
@@ -38,13 +36,13 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 	return nil
 }
 
-func newHandler(config Config) (*Handler, error) {
-	h := &Handler{confPath: path.Join(config.Workdir, "kataribe.toml")}
+func newHandler(workdir string) (*Handler, error) {
+	h := &Handler{confPath: path.Join(workdir, "kataribe.toml")}
 	if _, err := os.Stat(h.confPath); err == nil {
 		return h, nil
 	}
 
-	if err := os.MkdirAll(config.Workdir, 0755); err != nil {
+	if err := os.MkdirAll(workdir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to make directory: %w", err)
 	}
 	if err := exec.Command("kataribe", "-conf", h.confPath, "-generate").Run(); err != nil {

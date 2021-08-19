@@ -3,19 +3,14 @@ package querydigest
 import (
 	"fmt"
 
+	"github.com/kaz/pprotein/internal/collect"
 	"github.com/kaz/pprotein/internal/extproc"
 	"github.com/labstack/echo/v4"
 )
 
-type (
-	Config struct {
-		Workdir string
-	}
-)
-
-func RegisterHandlers(g *echo.Group, config Config) error {
+func RegisterHandlers(g *echo.Group, opts *collect.Options) error {
 	p := &processor{}
-	if err := extproc.RegisterHandlers(g, extproc.Config{Workdir: config.Workdir, Processor: p}); err != nil {
+	if err := extproc.RegisterHandlers(g, p, opts); err != nil {
 		return fmt.Errorf("failed to register extproc handlers: %w", err)
 	}
 

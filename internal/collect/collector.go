@@ -4,16 +4,25 @@ import (
 	"fmt"
 	"io"
 	"sync"
+
+	"github.com/kaz/pprotein/internal/event"
 )
 
 type (
+	Options struct {
+		WorkDir   string
+		FileName  string
+		EventName string
+		EventHub  *event.Hub
+	}
+
 	Collector struct {
 		storage   *Storage
 		processor Processor
+		publisher *event.Publisher
 
-		mu    *sync.RWMutex
-		data  map[string]*Entry
-		event *sync.Cond
+		mu   *sync.RWMutex
+		data map[string]*Entry
 	}
 
 	Entry struct {
@@ -22,7 +31,7 @@ type (
 		Message  string
 	}
 
-	CollectRequest struct {
+	Job struct {
 		URL      string
 		Duration int
 	}
@@ -36,8 +45,8 @@ const (
 	StatusPending Status = "pending"
 )
 
-func New(processor Processor, workdir string, filename string) (*Collector, error) {
-	store, err := newStorage(workdir, filename)
+func New(processor Processor, opts *Options) (*Collector, error) {
+	store, err := newStorage(opts.WorkDir, opts.FileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize storage: %w", err)
 	}
@@ -45,10 +54,10 @@ func New(processor Processor, workdir string, filename string) (*Collector, erro
 	c := &Collector{
 		storage:   store,
 		processor: newCachedProcessor(processor),
+		publisher: opts.EventHub.Publisher(opts.EventName),
 
-		mu:    &sync.RWMutex{},
-		data:  map[string]*Entry{},
-		event: sync.NewCond(&sync.Mutex{}),
+		mu:   &sync.RWMutex{},
+		data: map[string]*Entry{},
 	}
 
 	snapshots, err := store.List()
@@ -73,7 +82,7 @@ func (c *Collector) updateStatus(snapshot *Snapshot, status Status, msg string) 
 		Message:  msg,
 	}
 
-	c.event.Broadcast()
+	c.publisher.Publish()
 }
 
 func (c *Collector) runProcessor(snapshot *Snapshot) error {
@@ -116,7 +125,7 @@ func (c *Collector) List() []*Entry {
 	return resp
 }
 
-func (c *Collector) Collect(req *CollectRequest) error {
+func (c *Collector) Collect(req *Job) error {
 	if req.URL == "" || req.Duration == 0 {
 		return fmt.Errorf("any parameters cannot be nil")
 	}

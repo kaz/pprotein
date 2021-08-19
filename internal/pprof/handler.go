@@ -11,18 +11,15 @@ import (
 )
 
 type (
-	Config struct {
-		Workdir string
-	}
 	handler struct {
 		collector *collect.Collector
 	}
 )
 
-func RegisterHandlers(g *echo.Group, config Config) error {
+func RegisterHandlers(g *echo.Group, opts *collect.Options) error {
 	p := &processor{mu: &sync.Mutex{}, route: g}
 
-	collector, err := collect.New(p, config.Workdir, "profile.pb.gz")
+	collector, err := collect.New(p, opts)
 	if err != nil {
 		return fmt.Errorf("failed to initialize collector: %w", err)
 	}
@@ -31,7 +28,7 @@ func RegisterHandlers(g *echo.Group, config Config) error {
 	g.GET("", h.getIndex)
 	g.POST("", h.postIndex)
 
-	return collector.RegisterHandlers(g)
+	return nil
 }
 
 func (h *handler) getIndex(c echo.Context) error {
@@ -39,7 +36,7 @@ func (h *handler) getIndex(c echo.Context) error {
 }
 
 func (h *handler) postIndex(c echo.Context) error {
-	req := &collect.CollectRequest{}
+	req := &collect.Job{}
 	if err := c.Bind(req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 	}

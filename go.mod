@@ -3,6 +3,7 @@ module github.com/kaz/pprotein
 go 1.16
 
 require (
+	github.com/alexandrevicenzi/go-sse v1.6.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/felixge/fgprof v0.9.1
 	github.com/gin-gonic/gin v1.7.4

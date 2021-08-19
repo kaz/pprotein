@@ -14,7 +14,3 @@ pprotein: view/dist
 view/dist:
 	npm --prefix view ci
 	npm --prefix view run build
-
-.PHONY: clean
-clean:
-	rm -rf pprotein rice-box.go

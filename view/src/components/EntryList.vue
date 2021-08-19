@@ -1,9 +1,9 @@
 <template>
   <section>
-    <PproteinForm :endpoint="$props.endpoint" @fetch="update" />
+    <PproteinForm :endpoint="$props.endpoint" />
     <EntriesTable
       :endpoint="$props.endpoint"
-      :entries="$store.state.remote[$props.endpoint]"
+      :entries="$store.state.entries[$props.endpoint]"
     />
   </section>
 </template>
@@ -22,30 +22,6 @@ export default defineComponent({
     endpoint: {
       type: String,
       required: true,
-    },
-  },
-  data() {
-    return {
-      eventSource: null as EventSource | null,
-    };
-  },
-  beforeMount() {
-    this.update();
-
-    const eventPath = `/api/${this.$props.endpoint}/events`;
-    this.eventSource = new EventSource(eventPath);
-    this.eventSource.onerror = () =>
-      console.error(`EventSource error: ${eventPath}`);
-    this.eventSource.onmessage = () => this.update();
-  },
-  beforeUnmount() {
-    this.eventSource?.close();
-  },
-  methods: {
-    async update() {
-      await this.$store.dispatch("syncStoreData", {
-        endpoint: this.$props.endpoint,
-      });
     },
   },
 });

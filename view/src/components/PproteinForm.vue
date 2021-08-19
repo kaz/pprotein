@@ -10,7 +10,7 @@
     </label>
     <label>
       &nbsp;<br />
-      <button @click="fetch">Fetch</button>
+      <button @click="collect">Collect</button>
     </label>
   </div>
 </template>
@@ -26,7 +26,6 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ["fetch"],
   data(): { url: string; duration: string } {
     return {
       url: localStorage.getItem(`url[${this.$props.endpoint}]`) || "http://",
@@ -43,13 +42,12 @@ export default defineComponent({
     },
   },
   methods: {
-    async fetch() {
-      await this.$store.dispatch("postStoreData", {
+    async collect() {
+      await this.$store.dispatch("addCollectJob", {
         endpoint: this.$props.endpoint,
         URL: this.$data.url,
         Duration: parseInt(this.$data.duration),
       });
-      this.$emit("fetch");
     },
   },
 });

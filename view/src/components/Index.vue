@@ -1,18 +1,22 @@
 <template>
   <section>
-    <div v-for="key in Object.keys(eventSources)" :key="key" class="container">
-      <h2>{{ key }}</h2>
-      <PproteinForm :ref="key" :endpoint="key" />
+    <div
+      v-for="endpoint in $store.state.endpoints"
+      :key="endpoint"
+      class="container"
+    >
+      <h2>{{ endpoint }}</h2>
+      <PproteinForm :ref="endpoint" :endpoint="endpoint" />
       <EntriesTable
-        :prefix="`/${key}`"
-        :entries="$store.state.remote[key] || []"
+        :prefix="`/${endpoint}`"
+        :entries="$store.state.entries[endpoint] || []"
         :length="3"
       />
     </div>
+    <div class="control">
+      <button @click="collect">Collect All</button>
+    </div>
   </section>
-  <div class="control">
-    <button @click="fetchAll">Fetch All</button>
-  </div>
 </template>
 
 <script lang="ts">
@@ -22,44 +26,13 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   components: { EntriesTable, PproteinForm },
-  data() {
-    return {
-      eventSources: {
-        pprof: null,
-        httplog: null,
-        slowlog: null,
-      } as { [key: string]: EventSource | null },
-    };
-  },
-  beforeMount() {
-    Object.keys(this.eventSources).forEach(this.subscribe);
-  },
-  beforeUnmount() {
-    Object.keys(this.eventSources).forEach(this.unsubscribe);
-  },
   methods: {
-    fetchAll() {
+    collect() {
       return Promise.all(
-        Object.keys(this.eventSources).map((endpoint) =>
-          (this.$refs[endpoint] as InstanceType<typeof PproteinForm>).fetch()
+        this.$store.state.endpoints.map((endpoint) =>
+          (this.$refs[endpoint] as InstanceType<typeof PproteinForm>).collect()
         )
       );
-    },
-    update(endpoint: string) {
-      return this.$store.dispatch("syncStoreData", { endpoint });
-    },
-    subscribe(endpoint: string) {
-      this.update(endpoint);
-
-      const eventPath = `/api/${endpoint}/events`;
-      const eventSource = new EventSource(eventPath);
-      eventSource.onerror = () =>
-        console.error(`EventSource error: ${eventPath}`);
-      eventSource.onmessage = () => this.update(endpoint);
-      this.eventSources[endpoint] = eventSource;
-    },
-    unsubscribe(endpoint: string) {
-      this.eventSources[endpoint]?.close();
     },
   },
 });
@@ -75,7 +48,7 @@ section {
 }
 
 .control {
-  margin: 0 2em 2em 2em;
+  margin: 3em 0;
   text-align: right;
 }
 </style>

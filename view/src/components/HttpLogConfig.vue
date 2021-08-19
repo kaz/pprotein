@@ -1,10 +1,12 @@
 <template>
-  <textarea v-model="$data.content" :disabled="processing"></textarea>
-  <div class="control">
-    <button :disabled="processing" @click="update">
-      {{ $data.label || "Update" }}
-    </button>
-  </div>
+  <section>
+    <textarea v-model="$data.content" :disabled="processing"></textarea>
+    <div class="control">
+      <button :disabled="processing" @click="update">
+        {{ $data.label || "Update" }}
+      </button>
+    </div>
+  </section>
 </template>
 
 <script lang="ts">
@@ -48,13 +50,17 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
-textarea {
+section {
   margin: 2em;
-  flex: 1 0 auto;
+}
+
+textarea {
+  width: 100%;
+  height: 70vh;
 }
 
 .control {
-  margin: 0 2em 2em 2em;
+  margin: 3em 0;
   text-align: right;
 }
 </style>
