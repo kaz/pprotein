@@ -1,5 +1,10 @@
 <template>
   <EntryList endpoint="httplog" />
+  <div class="control">
+    <router-link v-slot="{ navigate }" to="/httplog/config/" custom>
+      <button @click="navigate">Edit kataribe.toml</button>
+    </router-link>
+  </div>
 </template>
 
 <script lang="ts">
@@ -12,3 +17,9 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped lang="scss">
+.control {
+  margin: 0 2em 2em 2em;
+  text-align: right;
+}
+</style>
