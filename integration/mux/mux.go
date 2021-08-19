@@ -16,9 +16,8 @@ func NewDebugHandler() http.Handler {
 }
 
 func registerDebugHandlers(r *mux.Router) {
-	r.Handle("/debug/log/test", tail.NewTailHandler("./test"))
-	r.Handle("/debug/log/nginx", tail.NewTailHandler("/var/log/nginx/access.log"))
-	r.Handle("/debug/log/mysql", tail.NewTailHandler("/var/log/mysql/mysql-slow.log"))
+	r.Handle("/debug/log/httplog", tail.NewTailHandler("/var/log/nginx/access.log"))
+	r.Handle("/debug/log/slowlog", tail.NewTailHandler("/var/log/mysql/mysql-slow.log"))
 
 	r.Handle("/debug/fgprof", fgprof.Handler())
 

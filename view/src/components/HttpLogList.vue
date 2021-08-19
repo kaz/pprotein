@@ -3,7 +3,7 @@
     <EntryList endpoint="httplog" />
     <div class="control">
       <router-link v-slot="{ navigate }" to="/httplog/config/" custom>
-        <button @click="navigate">Edit kataribe.toml</button>
+        <button @click="navigate">Edit config</button>
       </router-link>
     </div>
   </div>

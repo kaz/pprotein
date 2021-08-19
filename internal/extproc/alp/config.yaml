@@ -1,0 +1,2 @@
+matching_groups:
+  - ^/api/schedules/.+$

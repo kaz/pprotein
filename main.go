@@ -9,7 +9,7 @@ import (
 	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/kaz/pprotein/internal/collect"
 	"github.com/kaz/pprotein/internal/event"
-	"github.com/kaz/pprotein/internal/extproc/kataribe"
+	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/querydigest"
 	"github.com/kaz/pprotein/internal/pprof"
 	"github.com/labstack/echo/v4"
@@ -41,13 +41,13 @@ func start() error {
 		return err
 	}
 
-	kOpts := &collect.Options{
+	aOpts := &collect.Options{
 		WorkDir:   "./data/httplog",
 		FileName:  "raw.txt",
 		EventName: "httplog",
 		EventHub:  hub,
 	}
-	if err := kataribe.RegisterHandlers(e.Group("/api/httplog"), kOpts); err != nil {
+	if err := alp.RegisterHandlers(e.Group("/api/httplog"), aOpts); err != nil {
 		return err
 	}
 

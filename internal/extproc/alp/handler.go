@@ -1,11 +1,11 @@
-package kataribe
+package alp
 
 import (
+	_ "embed"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 
 	"github.com/kaz/pprotein/internal/collect"
@@ -18,6 +18,9 @@ type (
 		confPath string
 	}
 )
+
+//go:embed config.yaml
+var sampleConfig []byte
 
 func RegisterHandlers(g *echo.Group, opts *collect.Options) error {
 	h, err := newHandler(opts.WorkDir)
@@ -37,7 +40,7 @@ func RegisterHandlers(g *echo.Group, opts *collect.Options) error {
 }
 
 func newHandler(workdir string) (*Handler, error) {
-	h := &Handler{confPath: path.Join(workdir, "kataribe.toml")}
+	h := &Handler{confPath: path.Join(workdir, "config.yml")}
 	if _, err := os.Stat(h.confPath); err == nil {
 		return h, nil
 	}
@@ -45,7 +48,7 @@ func newHandler(workdir string) (*Handler, error) {
 	if err := os.MkdirAll(workdir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to make directory: %w", err)
 	}
-	if err := exec.Command("kataribe", "-conf", h.confPath, "-generate").Run(); err != nil {
+	if err := os.WriteFile(h.confPath, sampleConfig, 0644); err != nil {
 		return nil, fmt.Errorf("failed to generate kataribe config: %w", err)
 	}
 	return h, nil
