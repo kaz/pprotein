@@ -6,8 +6,8 @@
 		"dev": "vite",
 		"build": "vue-tsc --noEmit && vite build",
 		"serve": "vite preview",
-		"lint": "eslint src/**/*",
-		"fix": "eslint --fix src/**/*"
+		"lint": "eslint --ext .ts,.vue src",
+		"fix": "eslint --fix --ext .ts,.vue src"
 	},
 	"dependencies": {
 		"typeface-courier-prime": "^1.1.13",

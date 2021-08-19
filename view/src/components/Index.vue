@@ -1,8 +1,5 @@
 <template>
   <section>
-    <div class="container right">
-      <button @click="fetchAll">Fetch All</button>
-    </div>
     <div v-for="key in Object.keys(eventSources)" :key="key" class="container">
       <h2>{{ key }}</h2>
       <PproteinForm :ref="key" :endpoint="key" />
@@ -13,6 +10,9 @@
       />
     </div>
   </section>
+  <div class="control">
+    <button @click="fetchAll">Fetch All</button>
+  </div>
 </template>
 
 <script lang="ts">
@@ -74,10 +74,8 @@ section {
   margin-bottom: 2em;
 }
 
-.right {
+.control {
+  margin: 0 2em 2em 2em;
   text-align: right;
-  button {
-    margin-left: 1em;
-  }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <main>
-    <header>pprotein ⚙</header>
+    <header>{{ $data.title }}</header>
     <nav>
       <router-link v-slot="{ navigate, isActive }" to="/" custom>
         <div :class="{ active: isActive }" @click="navigate">top</div>
@@ -26,9 +26,14 @@ import { defineComponent } from "vue";
 type Dict = { [key: string]: string };
 
 export default defineComponent({
+  data() {
+    return {
+      title: "pprotein ⚙",
+    };
+  },
   watch: {
     $route({ params, meta }) {
-      document.title = `${this.getTitle(params, meta)} | PProtein`;
+      document.title = `${this.getTitle(params, meta)} | ${this.$data.title}`;
     },
   },
   methods: {
