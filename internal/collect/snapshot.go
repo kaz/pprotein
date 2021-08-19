@@ -32,8 +32,8 @@ type (
 )
 
 func (s *Snapshot) Prune() error {
-	if err := os.RemoveAll(path.Dir(s.Meta)); err != nil {
-		return fmt.Errorf("failed to remove directory: %w", err)
+	if err := os.Remove(s.Meta); err != nil {
+		return fmt.Errorf("failed to remove meta file: %w", err)
 	}
 	return nil
 }
