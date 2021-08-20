@@ -10,8 +10,7 @@ ENV PATH $GOPATH/bin:$PATH
 WORKDIR /go/src/app
 COPY . .
 
-RUN make view/dist
-RUN make pprotein
+RUN make build
 
 # --------------------------------------------------
 
@@ -36,6 +35,7 @@ FROM alpine
 RUN apk add --no-cache bash perl perl-dbd-mysql perl-time-hires graphviz
 
 COPY --from=pprotein /go/src/app/pprotein /usr/local/bin/
+COPY --from=pprotein /go/src/app/pprotein-agent /usr/local/bin/
 COPY --from=alp /go/bin/alp /usr/local/bin/
 COPY --from=percona-toolkit /percona-toolkit-3.3.1/bin/* /usr/local/bin/
 
