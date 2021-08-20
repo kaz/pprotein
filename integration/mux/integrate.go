@@ -1,9 +1,8 @@
-// +build !release
-
 package mux
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/kaz/pprotein/integration"
 )
 
 func Integrate(r *mux.Router) {
@@ -12,7 +11,7 @@ func Integrate(r *mux.Router) {
 }
 
 func EnableDebugHandler(r *mux.Router) {
-	registerDebugHandlers(r)
+	integration.RegisterDebugHandlers(r)
 }
 
 func EnableDebugMode(r *mux.Router) {

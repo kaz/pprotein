@@ -1,11 +1,9 @@
-// +build !release
-
-package echo
+package echov4
 
 import (
-	"github.com/kaz/pprotein/integration/mux"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/kaz/pprotein/integration"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 )
 
@@ -15,7 +13,7 @@ func Integrate(e *echo.Echo) {
 }
 
 func EnableDebugHandler(e *echo.Echo) {
-	e.Any("/debug/*", echo.WrapHandler(mux.NewDebugHandler()))
+	e.Any("/debug/*", echo.WrapHandler(integration.NewDebugHandler()))
 }
 
 func EnableDebugMode(e *echo.Echo) {

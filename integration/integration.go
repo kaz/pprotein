@@ -1,4 +1,4 @@
-package mux
+package integration
 
 import (
 	"net/http"
@@ -11,11 +11,11 @@ import (
 
 func NewDebugHandler() http.Handler {
 	r := mux.NewRouter()
-	EnableDebugHandler(r)
+	RegisterDebugHandlers(r)
 	return r
 }
 
-func registerDebugHandlers(r *mux.Router) {
+func RegisterDebugHandlers(r *mux.Router) {
 	r.Handle("/debug/log/httplog", tail.NewTailHandler("/var/log/nginx/access.log"))
 	r.Handle("/debug/log/slowlog", tail.NewTailHandler("/var/log/mysql/mysql-slow.log"))
 

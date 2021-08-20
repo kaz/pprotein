@@ -1,10 +1,8 @@
-// +build !release
-
 package gin
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/kaz/pprotein/integration/mux"
+	"github.com/kaz/pprotein/integration"
 )
 
 func Integrate(r *gin.Engine) {
@@ -13,7 +11,7 @@ func Integrate(r *gin.Engine) {
 }
 
 func EnableDebugHandler(r *gin.Engine) {
-	r.Any("/debug/*path", gin.WrapH(mux.NewDebugHandler()))
+	r.Any("/debug/*path", gin.WrapH(integration.NewDebugHandler()))
 }
 
 func EnableDebugMode(r *gin.Engine) {
