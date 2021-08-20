@@ -10,6 +10,8 @@
 		"fix": "eslint --fix --ext .ts,.vue src"
 	},
 	"dependencies": {
+		"@types/papaparse": "^5.2.6",
+		"papaparse": "^5.3.1",
 		"typeface-courier-prime": "^1.1.13",
 		"vue": "^3.2.4",
 		"vue-router": "^4.0.11",
