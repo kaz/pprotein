@@ -2,19 +2,16 @@
   <section>
     <pre v-if="!logData">Loading ...</pre>
     <div v-else class="container">
-      <div>ヘッダーの項目をクリックでソートできます</div>
-      <br />
       <table border="1">
         <thead>
           <tr>
             <th v-for="h in header" :key="h" @click="sortBy(h)">
-              <span
-                >{{ h
-                }}<template v-if="sort == h"
-                  ><template v-if="order == 'asc'">↑</template>
-                  <template v-if="order == 'desc'">↓</template>
-                </template></span
-              >
+              <span>
+                {{ h }}
+                <span v-if="sort == h" class="sortOrder">
+                  {{ order == "asc" ? "▲" : "▼" }}
+                </span>
+              </span>
             </th>
           </tr>
         </thead>
@@ -24,6 +21,7 @@
           </tr>
         </tbody>
       </table>
+      <div class="tips">Click header to sort</div>
     </div>
   </section>
 </template>
@@ -32,18 +30,14 @@
 import { defineComponent } from "vue";
 import Pase, { ParseResult } from "papaparse";
 
-const isNumeric = (v: any) => {
+const isNumeric = (v: string) => {
   return !isNaN(+v);
 };
 
 export default defineComponent({
-  data(): {
-    logData: ParseResult<string[]>;
-    sort: string;
-    order: "desc" | "asc";
-  } {
+  data() {
     return {
-      logData: {} as Pase.ParseResult<string[]>,
+      logData: {} as ParseResult<string[]>,
       sort: "count",
       order: "desc",
     };
@@ -109,9 +103,11 @@ export default defineComponent({
 </script>
 
 <style scoped lang="scss">
+section {
+  margin: 2em;
+}
+
 pre {
-  margin: 0;
-  padding: 2em;
   overflow: auto;
   flex: 1 0 auto;
 }
@@ -126,10 +122,21 @@ table {
 
 td,
 th {
-  padding: 4px;
+  padding: 0.5em 1em;
+  border: 1px solid #999;
 }
 
 th > span {
   cursor: pointer;
+
+  .sortOrder {
+    font-size: 0.4em;
+    color: blue;
+  }
+}
+
+.tips {
+  margin-top: 3em;
+  text-align: right;
 }
 </style>
