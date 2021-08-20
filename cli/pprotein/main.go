@@ -1,32 +1,26 @@
 package main
 
 import (
-	"embed"
-	"io/fs"
 	"net/http"
 	"os"
 
-	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/kaz/pprotein/internal/collect"
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/querydigest"
 	"github.com/kaz/pprotein/internal/pprof"
+	"github.com/kaz/pprotein/view"
 	"github.com/labstack/echo/v4"
 )
 
-//go:embed view/dist/*
-var view embed.FS
-
 func start() error {
 	e := echo.New()
-	echov4.Integrate(e)
 
-	subfs, err := fs.Sub(view, "view/dist")
+	fs, err := view.FS()
 	if err != nil {
 		return err
 	}
-	e.GET("/*", echo.WrapHandler(http.FileServer(http.FS(subfs))))
+	e.GET("/*", echo.WrapHandler(http.FileServer(http.FS(fs))))
 
 	hub := event.NewHub()
 	hub.RegisterHandlers(e.Group("/api/event"))
@@ -65,7 +59,6 @@ func start() error {
 	if port == "" {
 		port = "9000"
 	}
-
 	return e.Start(":" + port)
 }
 
