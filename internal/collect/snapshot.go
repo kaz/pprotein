@@ -31,8 +31,8 @@ type (
 )
 
 func (s *Snapshot) Prune() error {
-	if err := os.Remove(s.Meta); err != nil {
-		return fmt.Errorf("failed to remove meta file: %w", err)
+	if err := os.Rename(s.Meta, s.Meta+".ignored"); err != nil {
+		return fmt.Errorf("failed to rename meta file: %w", err)
 	}
 	return nil
 }
