@@ -1,7 +1,6 @@
 package collect
 
 import (
-	"compress/flate"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -43,7 +42,7 @@ func (s *Snapshot) Collect() error {
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	req.Header.Set("Accept-Encoding", "gzip, deflate")
+	req.Header.Set("Accept-Encoding", "gzip")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -77,11 +76,6 @@ func (s *Snapshot) Collect() error {
 		if err != nil {
 			return fmt.Errorf("failed to initialize gzip reader: %w", err)
 		}
-		defer cr.Close()
-
-		r = cr
-	} else if strings.Contains(resp.Header.Get("Content-Encoding"), "deflate") {
-		cr := flate.NewReader(resp.Body)
 		defer cr.Close()
 
 		r = cr

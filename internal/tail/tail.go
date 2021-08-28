@@ -1,7 +1,6 @@
 package tail
 
 import (
-	"compress/flate"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -44,15 +43,6 @@ func (h *TailHandler) serve(w http.ResponseWriter, r *http.Request) error {
 
 		output = ew
 		w.Header().Set("Content-Encoding", "gzip")
-	} else if strings.Contains(r.Header.Get("Accept-Encoding"), "deflate") {
-		ew, err := flate.NewWriter(w, flate.DefaultCompression)
-		if err != nil {
-			return fmt.Errorf("failed to initialize deflate writer: %w", err)
-		}
-		defer ew.Close()
-
-		output = ew
-		w.Header().Set("Content-Encoding", "deflate")
 	}
 
 	if err := h.tail(output, time.Duration(seconds)*time.Second); err != nil {
