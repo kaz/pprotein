@@ -11,31 +11,56 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { SnapshotTarget } from "../store";
+
+type Config = { Type: string } & Omit<SnapshotTarget, "GroupId">;
+
+const defaultConfig: Config[] = [
+  {
+    Type: "pprof",
+    URL: "http://localhost:9000/debug/pprof/profile",
+    Duration: 60,
+    Label: "localhost",
+  },
+  {
+    Type: "httplog",
+    URL: "http://localhost:9000/debug/httplog",
+    Duration: 60,
+    Label: "localhost",
+  },
+  {
+    Type: "slowlog",
+    URL: "http://localhost:9000/debug/slowlog",
+    Duration: 60,
+    Label: "localhost",
+  },
+];
+
+const localStorageKey = "allConfig";
 
 export default defineComponent({
   data() {
     return {
-      processing: true,
+      processing: false,
       label: "",
-      content: "Loading ...",
+      content:
+        localStorage.getItem(localStorageKey) ||
+        JSON.stringify(defaultConfig, null, 4),
     };
-  },
-  async beforeCreate() {
-    const resp = await fetch(`/api/httplog/config`);
-    this.$data.content = await resp.text();
-    this.$data.processing = false;
   },
   methods: {
     async update() {
       this.$data.processing = true;
       this.$data.label = "Updating ...";
 
-      const resp = await fetch(`/api/httplog/config`, {
-        method: "POST",
-        body: this.$data.content,
-      });
-      if (!resp.ok) {
-        alert(`ERROR: ${await resp.text()}`);
+      try {
+        const contentObj = JSON.parse(this.$data.content);
+        localStorage.setItem(
+          localStorageKey,
+          JSON.stringify(contentObj, null, 4)
+        );
+      } catch (e) {
+        alert(`ERROR: ${e}`);
 
         this.$data.label = "Failed";
         this.reset();

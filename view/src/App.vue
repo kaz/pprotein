@@ -2,8 +2,8 @@
   <main>
     <header>{{ $data.title }}</header>
     <nav>
-      <router-link v-slot="{ navigate, isActive }" to="/" custom>
-        <div :class="{ active: isActive }" @click="navigate">top</div>
+      <router-link v-slot="{ navigate, isActive }" to="/all/" custom>
+        <div :class="{ active: isActive }" @click="navigate">all</div>
       </router-link>
       <router-link v-slot="{ navigate, isActive }" to="/pprof/" custom>
         <div :class="{ active: isActive }" @click="navigate">pprof</div>

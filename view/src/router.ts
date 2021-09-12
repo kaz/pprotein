@@ -1,8 +1,9 @@
 import { createRouter, createWebHashHistory } from "vue-router";
+import All from "./components/All.vue";
+import AllConfig from "./components/AllConfig.vue";
 import HttpLogConfig from "./components/HttpLogConfig.vue";
 import HttpLogEntry from "./components/HttpLogEntry.vue";
 import HttpLogList from "./components/HttpLogList.vue";
-import Index from "./components/Index.vue";
 import PProfEntry from "./components/PProfEntry.vue";
 import PProfList from "./components/PProfList.vue";
 import SlowLogEntry from "./components/SlowLogEntry.vue";
@@ -13,9 +14,20 @@ export default createRouter({
   routes: [
     {
       path: "/",
-      component: Index,
+      redirect: "/all/",
+    },
+    {
+      path: "/all/",
+      component: All,
       meta: {
-        title: "top",
+        title: "all",
+      },
+    },
+    {
+      path: "/all/config/",
+      component: AllConfig,
+      meta: {
+        title: "all - config",
       },
     },
     {

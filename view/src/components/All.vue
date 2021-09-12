@@ -1,27 +1,30 @@
 <template>
-  <div>
-    <EntryList endpoint="httplog" />
+  <section>
     <div class="control">
-      <router-link v-slot="{ navigate }" to="/httplog/config/" custom>
+      <button>Collect</button>
+      <router-link v-slot="{ navigate }" to="/all/config/" custom>
         <button @click="navigate">Configure</button>
       </router-link>
     </div>
-  </div>
+  </section>
 </template>
 
 <script lang="ts">
-import EntryList from "./EntryList.vue";
 import { defineComponent } from "vue";
 
-export default defineComponent({
-  components: {
-    EntryList,
-  },
-});
+export default defineComponent({});
 </script>
+
 <style scoped lang="scss">
+section {
+  margin: 2em;
+}
+
 .control {
-  margin: 3em 4em;
   text-align: right;
+
+  button {
+    margin-left: 0.5em;
+  }
 }
 </style>

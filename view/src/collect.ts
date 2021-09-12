@@ -5,7 +5,7 @@ export const generateId = new Date().getTime().toString(36);
 export const addCollectJob = async (
   endpoint: string,
   target: SnapshotTarget
-) => {
+): Promise<void> => {
   const resp = await fetch(`/api/${endpoint}`, {
     method: "POST",
     headers: {
