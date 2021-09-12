@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/kaz/pprotein/internal/collect"
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/extproc/alp"
@@ -15,6 +16,7 @@ import (
 
 func start() error {
 	e := echo.New()
+	echov4.Integrate(e)
 
 	fs, err := view.FS()
 	if err != nil {

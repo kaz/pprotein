@@ -1,7 +1,6 @@
 package collect
 
 import (
-	"compress/flate"
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
@@ -33,8 +32,8 @@ type (
 )
 
 func (s *Snapshot) Prune() error {
-	if err := os.Remove(s.Meta); err != nil {
-		return fmt.Errorf("failed to remove meta file: %w", err)
+	if err := os.Rename(s.Meta, s.Meta+".ignored"); err != nil {
+		return fmt.Errorf("failed to rename meta file: %w", err)
 	}
 	return nil
 }
@@ -44,7 +43,7 @@ func (s *Snapshot) Collect() error {
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	req.Header.Set("Accept-Encoding", "gzip, deflate")
+	req.Header.Set("Accept-Encoding", "gzip")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -80,11 +79,6 @@ func (s *Snapshot) Collect() error {
 		if err != nil {
 			return fmt.Errorf("failed to initialize gzip reader: %w", err)
 		}
-		defer cr.Close()
-
-		r = cr
-	} else if strings.Contains(resp.Header.Get("Content-Encoding"), "deflate") {
-		cr := flate.NewReader(resp.Body)
 		defer cr.Close()
 
 		r = cr
