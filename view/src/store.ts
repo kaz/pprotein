@@ -21,13 +21,13 @@ export type SnapshotTarget = {
 
 const state = {
   endpoints: ["pprof", "httplog", "slowlog"],
-  entries: {} as { [key: string]: Entry[] },
+  entries: {} as { [key: string]: Entry },
 };
 
 const syncPlugin = (store: Store<typeof state>) => {
   const es = new EventSource("/api/event");
   es.addEventListener("message", ({ data }) => {
-    store.dispatch("sync", { endpoint: data });
+    store.commit("saveEntry", JSON.parse(data));
   });
 
   store.state.endpoints.forEach((endpoint) => {
@@ -39,16 +39,9 @@ export default new Vuex.Store({
   state,
   plugins: [syncPlugin],
   mutations: {
-    sync(state, { endpoint, entries }: { endpoint: string; entries: Entry[] }) {
-      state.entries[endpoint] = entries
-        .map((e) => {
-          e.Snapshot.Datetime = new Date(e.Snapshot.Datetime);
-          return e;
-        })
-        .sort(
-          (a, b) =>
-            b.Snapshot.Datetime.getTime() - a.Snapshot.Datetime.getTime()
-        );
+    saveEntry(state, entry: Entry) {
+      entry.Snapshot.Datetime = new Date(entry.Snapshot.Datetime);
+      state.entries[entry.Snapshot.ID] = entry;
     },
   },
   actions: {
@@ -59,13 +52,21 @@ export default new Vuex.Store({
           return alert("HTTP Error: " + (await resp.text()));
         }
 
-        commit("sync", {
-          endpoint,
-          entries: await resp.json(),
-        });
+        const entries = (await resp.json()) as Entry[];
+        entries.forEach((entry) => commit("saveEntry", entry));
       } catch (e) {
         return alert(e);
       }
+    },
+  },
+  getters: {
+    entriesByType: (state) => (snapshotType: string) => {
+      return Object.values(state.entries)
+        .filter((e) => e.Snapshot.Type == snapshotType)
+        .sort(
+          (a, b) =>
+            b.Snapshot.Datetime.getTime() - a.Snapshot.Datetime.getTime()
+        );
     },
   },
 });

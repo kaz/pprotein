@@ -1,8 +1,10 @@
 package collect
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"sync"
 
 	"github.com/kaz/pprotein/internal/event"
@@ -21,7 +23,7 @@ type (
 
 		storage   *Storage
 		processor Processor
-		publisher *event.Publisher
+		eventHub  *event.Hub
 
 		mu   *sync.RWMutex
 		data map[string]*Entry
@@ -52,7 +54,7 @@ func New(processor Processor, opts *Options) (*Collector, error) {
 
 		storage:   store,
 		processor: newCachedProcessor(processor),
-		publisher: opts.EventHub.Publisher(opts.Type),
+		eventHub:  opts.EventHub,
 
 		mu:   &sync.RWMutex{},
 		data: map[string]*Entry{},
@@ -71,16 +73,25 @@ func New(processor Processor, opts *Options) (*Collector, error) {
 }
 
 func (c *Collector) updateStatus(snapshot *Snapshot, status Status, msg string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.data[snapshot.ID] = &Entry{
+	entry := &Entry{
 		Snapshot: snapshot,
 		Status:   status,
 		Message:  msg,
 	}
 
-	c.publisher.Publish()
+	eventData, err := json.Marshal(entry)
+	if err != nil {
+		log.Printf("failed to serialize event: %v", err)
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.data[snapshot.ID] = entry
+
+	if eventData != nil {
+		c.eventHub.Publish(eventData)
+	}
 }
 
 func (c *Collector) runProcessor(snapshot *Snapshot) error {

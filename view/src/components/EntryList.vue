@@ -1,7 +1,7 @@
 <template>
   <section>
     <PproteinForm :endpoint="$props.endpoint" />
-    <EntriesTable :entries="$store.state.entries[$props.endpoint]" />
+    <EntriesTable :entries="$store.getters.entriesByType($props.endpoint)" />
   </section>
 </template>
 

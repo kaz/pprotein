@@ -20,13 +20,6 @@ func NewHub() *Hub {
 func (h *Hub) RegisterHandlers(g *echo.Group) {
 	g.GET("", echo.WrapHandler(h.server))
 }
-
-func (h *Hub) Publisher(message string) *Publisher {
-	return &Publisher{
-		hub:     h,
-		message: message,
-	}
-}
-func (h *Hub) publish(message string) {
+func (h *Hub) Publish(message []byte) {
 	h.server.SendMessage("", sse.SimpleMessage(string(message)))
 }
