@@ -13,39 +13,40 @@
 import { defineComponent } from "vue";
 import { SnapshotTarget } from "../store";
 
-type Config = { Type: string } & Omit<SnapshotTarget, "GroupId">;
+export type Config = { Type: string } & Omit<SnapshotTarget, "GroupId">;
+export const localStorageKey = "groupConfig";
 
 const defaultConfig: Config[] = [
   {
     Type: "pprof",
     URL: "http://localhost:9000/debug/pprof/profile",
-    Duration: 60,
-    Label: "localhost",
+    Duration: 10,
+    Label: "101-localhost",
   },
   {
     Type: "httplog",
-    URL: "http://localhost:9000/debug/httplog",
-    Duration: 60,
-    Label: "localhost",
+    URL: "http://localhost:9000/debug/log/httplog",
+    Duration: 10,
+    Label: "102-localhost",
   },
   {
     Type: "slowlog",
-    URL: "http://localhost:9000/debug/slowlog",
-    Duration: 60,
-    Label: "localhost",
+    URL: "http://localhost:9000/debug/log/slowlog",
+    Duration: 10,
+    Label: "103-localhost",
   },
 ];
 
-const localStorageKey = "allConfig";
+export const getGroupConfig = (): string =>
+  localStorage.getItem(localStorageKey) ||
+  JSON.stringify(defaultConfig, null, 4);
 
 export default defineComponent({
   data() {
     return {
       processing: false,
       label: "",
-      content:
-        localStorage.getItem(localStorageKey) ||
-        JSON.stringify(defaultConfig, null, 4),
+      content: getGroupConfig(),
     };
   },
   methods: {

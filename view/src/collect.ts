@@ -1,6 +1,6 @@
 import { SnapshotTarget } from "./store";
 
-export const generateId = new Date().getTime().toString(36);
+export const createGroupId = (): string => new Date().toISOString();
 
 export const addCollectJob = async (
   endpoint: string,

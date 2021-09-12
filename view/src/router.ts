@@ -1,6 +1,8 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import All from "./components/All.vue";
-import AllConfig from "./components/AllConfig.vue";
+import GroupConfig from "./components/GroupConfig.vue";
+import GroupEntry from "./components/GroupEntry.vue";
+import GroupIndex from "./components/GroupIndex.vue";
+import GroupList from "./components/GroupList.vue";
 import HttpLogConfig from "./components/HttpLogConfig.vue";
 import HttpLogEntry from "./components/HttpLogEntry.vue";
 import HttpLogList from "./components/HttpLogList.vue";
@@ -14,21 +16,55 @@ export default createRouter({
   routes: [
     {
       path: "/",
-      redirect: "/all/",
+      redirect: "/group/",
     },
     {
-      path: "/all/",
-      component: All,
+      path: "/group/",
+      component: GroupList,
       meta: {
-        title: "all",
+        title: "group",
       },
     },
     {
-      path: "/all/config/",
-      component: AllConfig,
+      path: "/group/config/",
+      component: GroupConfig,
       meta: {
-        title: "all - config",
+        title: "group:config",
       },
+    },
+    {
+      path: "/group/:gid/",
+      component: GroupEntry,
+      children: [
+        {
+          path: "index/",
+          component: GroupIndex,
+          meta: {
+            title: "group:{{gid}}",
+          },
+        },
+        {
+          path: "pprof/:id/",
+          component: PProfEntry,
+          meta: {
+            title: "pprof:{{id}} | group:{{gid}}",
+          },
+        },
+        {
+          path: "httplog/:id/",
+          component: HttpLogEntry,
+          meta: {
+            title: "httplog:{{id}} | group:{{gid}}",
+          },
+        },
+        {
+          path: "slowlog/:id/",
+          component: SlowLogEntry,
+          meta: {
+            title: "slowlog:{{id}} | group:{{gid}}",
+          },
+        },
+      ],
     },
     {
       path: "/pprof/",
@@ -41,7 +77,7 @@ export default createRouter({
       path: "/pprof/:id/",
       component: PProfEntry,
       meta: {
-        title: "pprof - {{id}}",
+        title: "pprof:{{id}}",
       },
     },
     {
@@ -55,14 +91,14 @@ export default createRouter({
       path: "/httplog/config/",
       component: HttpLogConfig,
       meta: {
-        title: "httplog - config",
+        title: "httplog:config",
       },
     },
     {
       path: "/httplog/:id/",
       component: HttpLogEntry,
       meta: {
-        title: "httplog - {{id}}",
+        title: "httplog:{{id}}",
       },
     },
     {
@@ -76,7 +112,7 @@ export default createRouter({
       path: "/slowlog/:id/",
       component: SlowLogEntry,
       meta: {
-        title: "slowlog - {{id}}",
+        title: "slowlog:{{id}}",
       },
     },
   ],

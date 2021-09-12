@@ -1,4 +1,4 @@
-import Vuex, { Store } from "vuex";
+import { createStore, Store } from "vuex";
 
 export type Entry = {
   Status: "ok" | "fail" | "pending";
@@ -21,6 +21,7 @@ export type SnapshotTarget = {
 
 const state = {
   endpoints: ["pprof", "httplog", "slowlog"],
+  groups: [] as string[],
   entries: {} as { [key: string]: Entry },
 };
 
@@ -35,13 +36,21 @@ const syncPlugin = (store: Store<typeof state>) => {
   });
 };
 
-export default new Vuex.Store({
+export default createStore({
   state,
   plugins: [syncPlugin],
   mutations: {
     saveEntry(state, entry: Entry) {
       entry.Snapshot.Datetime = new Date(entry.Snapshot.Datetime);
       state.entries[entry.Snapshot.ID] = entry;
+
+      if (
+        entry.Snapshot.GroupId &&
+        !state.groups.includes(entry.Snapshot.GroupId)
+      ) {
+        state.groups.push(entry.Snapshot.GroupId);
+        state.groups.sort((a, b) => b.localeCompare(a));
+      }
     },
   },
   actions: {
@@ -67,6 +76,16 @@ export default new Vuex.Store({
           (a, b) =>
             b.Snapshot.Datetime.getTime() - a.Snapshot.Datetime.getTime()
         );
+    },
+    entriesByGroup: (state) => (groupId: string) => {
+      return Object.values(state.entries)
+        .filter((e) => e.Snapshot.GroupId == groupId)
+        .sort((a, b) => a.Snapshot.Label.localeCompare(b.Snapshot.Label));
+    },
+    availableEntriesByGroup: (_, getters) => (groupId: string) => {
+      return getters
+        .entriesByGroup(groupId)
+        .filter((e: Entry) => e.Status == "ok");
     },
   },
 });

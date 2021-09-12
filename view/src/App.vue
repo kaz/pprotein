@@ -1,9 +1,11 @@
 <template>
   <main>
-    <header>{{ $data.title }}</header>
+    <header>
+      <router-link to="/">{{ $data.title }}</router-link>
+    </header>
     <nav>
-      <router-link v-slot="{ navigate, isActive }" to="/all/" custom>
-        <div :class="{ active: isActive }" @click="navigate">all</div>
+      <router-link v-slot="{ navigate, isActive }" to="/group/" custom>
+        <div :class="{ active: isActive }" @click="navigate">group</div>
       </router-link>
       <router-link v-slot="{ navigate, isActive }" to="/pprof/" custom>
         <div :class="{ active: isActive }" @click="navigate">pprof</div>
@@ -64,17 +66,28 @@ main {
   height: 100vh;
   width: 100vw;
 }
+
 header {
+  flex-shrink: 0;
   padding: 1em 2em;
   background-color: #111;
-  color: #fff;
+
+  a {
+    color: #fff;
+    text-decoration: none;
+  }
 }
+
 nav {
+  flex-shrink: 0;
   display: flex;
+  overflow: auto;
   background-color: #333;
   color: #fff;
+
   div {
     cursor: pointer;
+    white-space: nowrap;
     padding: 0.7em 2em 0.4em 2em;
     border-bottom: 0.3em solid transparent;
     &.active {
@@ -82,6 +95,7 @@ nav {
     }
   }
 }
+
 section {
   padding: 1em 2em;
 }
