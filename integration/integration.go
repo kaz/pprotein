@@ -1,9 +1,10 @@
 package integration
 
 import (
-	"io/ioutil"
+	"github.com/kaz/pprotein/internal/git"
 	"net/http"
 	"net/http/pprof"
+	"os"
 	"strings"
 
 	"github.com/felixge/fgprof"
@@ -13,12 +14,12 @@ import (
 
 func NewDebugHandler() http.Handler {
 	r := mux.NewRouter()
-	r.Use(gitRevisionResponseMiddleware)
 	RegisterDebugHandlers(r)
 	return r
 }
 
 func RegisterDebugHandlers(r *mux.Router) {
+	r.Use(gitRevisionResponseMiddleware)
 	r.Handle("/debug/log/httplog", tail.NewTailHandler("/var/log/nginx/access.log"))
 	r.Handle("/debug/log/slowlog", tail.NewTailHandler("/var/log/mysql/mysql-slow.log"))
 
@@ -33,10 +34,18 @@ func RegisterDebugHandlers(r *mux.Router) {
 
 func gitRevisionResponseMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		revision, err := ioutil.ReadFile("/home/isucon/.git-revision")
-		if err == nil {
+		revision := git.GetCommitHash(getEnvOrDefault("GIT_REPO_DIR", "/home/isucon/repo"))
+		if revision != "" {
 			rw.Header().Set("X-GIT-REVISION", strings.ReplaceAll(string(revision), "\n", ""))
 		}
 		next.ServeHTTP(rw, r)
 	})
+}
+
+func getEnvOrDefault(key string, def string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	return v
 }
