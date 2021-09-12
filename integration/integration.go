@@ -36,7 +36,7 @@ func gitRevisionResponseMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		revision := git.GetCommitHash(getEnvOrDefault("GIT_REPO_DIR", "/home/isucon/repo"))
 		if revision != "" {
-			rw.Header().Set("X-GIT-REVISION", strings.ReplaceAll(string(revision), "\n", ""))
+			rw.Header().Set("X-GIT-REVISION", strings.ReplaceAll(revision, "\n", ""))
 		}
 		next.ServeHTTP(rw, r)
 	})
