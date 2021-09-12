@@ -1,8 +1,8 @@
 <template>
   <section>
     <GroupEntriesTable
-      :group-id="$route.params.gid"
-      :entries="$store.getters.entriesByGroup($route.params.gid)"
+      :group-id="groupId"
+      :entries="$store.getters.entriesByGroup(groupId)"
     />
   </section>
 </template>
@@ -14,6 +14,12 @@ import GroupEntriesTable from "./GroupEntriesTable.vue";
 export default defineComponent({
   components: {
     GroupEntriesTable,
+  },
+  computed: {
+    groupId() {
+      const gid = this.$route.params.gid;
+      return typeof gid == "string" ? gid : gid[0];
+    },
   },
 });
 </script>
