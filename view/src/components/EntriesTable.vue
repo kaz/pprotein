@@ -4,6 +4,7 @@
       <tr>
         <th>Open</th>
         <th>Datetime</th>
+        <th>Revision</th>
         <th>Source URL</th>
         <th>Duration</th>
         <th>Status</th>
@@ -19,6 +20,7 @@
           >
         </td>
         <td>{{ entry.Snapshot.Datetime.toLocaleString() }}</td>
+        <td>{{ entry.Snapshot.GitRevision }}</td>
         <td>{{ entry.Snapshot.URL }}</td>
         <td>{{ entry.Snapshot.Duration }}</td>
         <td>

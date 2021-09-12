@@ -19,10 +19,11 @@ type (
 		SnapshotPath `json:"-"`
 	}
 	SnapshotMeta struct {
-		ID       string
-		Datetime time.Time
-		URL      string
-		Duration int
+		ID          string
+		Datetime    time.Time
+		URL         string
+		Duration    int
+		GitRevision string
 	}
 	SnapshotPath struct {
 		Meta  string
@@ -50,6 +51,8 @@ func (s *Snapshot) Collect() error {
 		return fmt.Errorf("http error: %w", err)
 	}
 	defer resp.Body.Close()
+
+	s.GitRevision = resp.Header.Get("X-GIT-REVISION")
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("http error: status=%v", resp.StatusCode)

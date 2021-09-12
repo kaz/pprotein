@@ -8,6 +8,7 @@ export type Entry = {
     Datetime: Date;
     URL: string;
     Duration: number;
+    GitRevision: string;
   };
 };
 
