@@ -15,7 +15,7 @@
         <td>
           <router-link
             v-if="entry.Status == `ok`"
-            :to="`${$props.prefix}/${entry.Snapshot.ID}/`"
+            :to="`/${entry.Snapshot.Type}/${entry.Snapshot.ID}/`"
             >Open</router-link
           >
         </td>
@@ -39,10 +39,6 @@ import { PropType, defineComponent } from "vue";
 export default defineComponent({
   name: "EntriesTable",
   props: {
-    prefix: {
-      type: String,
-      default: ".",
-    },
     entries: {
       type: Array as PropType<Entry[]>,
       required: true,

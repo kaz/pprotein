@@ -8,9 +8,8 @@
       <h2>{{ endpoint }}</h2>
       <PproteinForm :ref="endpoint" :endpoint="endpoint" />
       <EntriesTable
-        :prefix="`/${endpoint}`"
         :entries="$store.state.entries[endpoint] || []"
-        :length="3"
+        :length="4"
       />
     </div>
     <div class="control">

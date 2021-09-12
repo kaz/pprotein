@@ -45,6 +45,8 @@ export default defineComponent({
   methods: {
     async collect() {
       await addCollectJob(this.$props.endpoint, {
+        GroupId: "",
+        Label: "",
         URL: this.$data.url,
         Duration: parseInt(this.$data.duration),
       });
