@@ -57,10 +57,22 @@ func (s *Snapshot) Collect() error {
 	}
 	defer resp.Body.Close()
 
+	var r io.Reader = resp.Body
+	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
+		cr, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to initialize gzip reader: %w", err)
+		}
+		defer cr.Close()
+
+		r = cr
+	}
+
 	s.GitRevision = resp.Header.Get("X-GIT-REVISION")
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("http error: status=%v", resp.StatusCode)
+		body, _ := io.ReadAll(r)
+		return fmt.Errorf("http error: status=%v, body=%v", resp.StatusCode, string(body))
 	}
 
 	if err := os.Mkdir(path.Dir(s.Meta), 0755); err != nil {
@@ -78,17 +90,6 @@ func (s *Snapshot) Collect() error {
 		return fmt.Errorf("failed to create body file: %w", err)
 	}
 	defer bodyFile.Close()
-
-	var r io.Reader = resp.Body
-	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
-		cr, err := gzip.NewReader(resp.Body)
-		if err != nil {
-			return fmt.Errorf("failed to initialize gzip reader: %w", err)
-		}
-		defer cr.Close()
-
-		r = cr
-	}
 
 	if written, err := io.Copy(bodyFile, r); err != nil {
 		return fmt.Errorf("failed to write body: %w", err)

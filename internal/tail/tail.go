@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -23,8 +24,7 @@ func NewTailHandler(filename string) *TailHandler {
 
 func (h *TailHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := h.serve(w, r); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(err.Error()))
+		log.Printf("serve failed: %v", err)
 	}
 }
 func (h *TailHandler) serve(w http.ResponseWriter, r *http.Request) error {
@@ -46,6 +46,9 @@ func (h *TailHandler) serve(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err := h.tail(output, time.Duration(seconds)*time.Second); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		output.Write([]byte(err.Error()))
+
 		return fmt.Errorf("failed to tail: %w", err)
 	}
 
