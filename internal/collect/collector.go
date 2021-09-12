@@ -10,13 +10,15 @@ import (
 
 type (
 	Options struct {
-		WorkDir   string
-		FileName  string
-		EventName string
-		EventHub  *event.Hub
+		Type     string
+		WorkDir  string
+		FileName string
+		EventHub *event.Hub
 	}
 
 	Collector struct {
+		typeLabel string
+
 		storage   *Storage
 		processor Processor
 		publisher *event.Publisher
@@ -30,12 +32,6 @@ type (
 		Status   Status
 		Message  string
 	}
-
-	Job struct {
-		URL      string
-		Duration int
-	}
-
 	Status string
 )
 
@@ -52,9 +48,11 @@ func New(processor Processor, opts *Options) (*Collector, error) {
 	}
 
 	c := &Collector{
+		typeLabel: opts.Type,
+
 		storage:   store,
 		processor: newCachedProcessor(processor),
-		publisher: opts.EventHub.Publisher(opts.EventName),
+		publisher: opts.EventHub.Publisher(opts.Type),
 
 		mu:   &sync.RWMutex{},
 		data: map[string]*Entry{},
@@ -125,12 +123,12 @@ func (c *Collector) List() []*Entry {
 	return resp
 }
 
-func (c *Collector) Collect(req *Job) error {
-	if req.URL == "" || req.Duration == 0 {
-		return fmt.Errorf("any parameters cannot be nil")
+func (c *Collector) Collect(target *SnapshotTarget) error {
+	if target.URL == "" || target.Duration == 0 {
+		return fmt.Errorf("URL and Duration cannot be nil")
 	}
 
-	snapshot := c.storage.PrepareSnapshot(req.URL, req.Duration)
+	snapshot := c.storage.PrepareSnapshot(c.typeLabel, target)
 	c.updateStatus(snapshot, StatusPending, "Collecting")
 
 	if err := snapshot.Collect(); err != nil {

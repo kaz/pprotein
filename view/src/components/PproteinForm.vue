@@ -17,6 +17,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import { addCollectJob } from "../collect";
 
 export default defineComponent({
   name: "PproteinForm",
@@ -43,8 +44,7 @@ export default defineComponent({
   },
   methods: {
     async collect() {
-      await this.$store.dispatch("addCollectJob", {
-        endpoint: this.$props.endpoint,
+      await addCollectJob(this.$props.endpoint, {
         URL: this.$data.url,
         Duration: parseInt(this.$data.duration),
       });

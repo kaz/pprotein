@@ -3,17 +3,18 @@ import Vuex, { Store } from "vuex";
 export type Entry = {
   Status: "ok" | "fail" | "pending";
   Message: string;
-  Snapshot: {
-    ID: string;
-    Datetime: Date;
-    URL: string;
-    Duration: number;
-    GitRevision: string;
-  };
+  Snapshot: SnapshotMeta & SnapshotTarget;
 };
 
-type CollectJob = {
-  endpoint: string;
+type SnapshotMeta = {
+  Type: string;
+  ID: string;
+  Datetime: Date;
+  GitRevision: string;
+};
+export type SnapshotTarget = {
+  GroupId: string;
+  Label: string;
   URL: string;
   Duration: number;
 };
@@ -64,19 +65,6 @@ export default new Vuex.Store({
         });
       } catch (e) {
         return alert(e);
-      }
-    },
-    async addCollectJob(_, { endpoint, URL, Duration }: CollectJob) {
-      const resp = await fetch(`/api/${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ URL, Duration }),
-      });
-
-      if (!resp.ok) {
-        alert(await resp.text());
       }
     },
   },

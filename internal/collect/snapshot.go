@@ -14,15 +14,21 @@ import (
 
 type (
 	Snapshot struct {
-		SnapshotMeta
-		SnapshotPath `json:"-"`
+		*SnapshotMeta
+		*SnapshotTarget
+		*SnapshotPath `json:"-"`
 	}
 	SnapshotMeta struct {
+		Type        string
 		ID          string
 		Datetime    time.Time
-		URL         string
-		Duration    int
 		GitRevision string
+	}
+	SnapshotTarget struct {
+		GroupId  string
+		Label    string
+		URL      string
+		Duration int
 	}
 	SnapshotPath struct {
 		Meta  string
@@ -90,7 +96,7 @@ func (s *Snapshot) Collect() error {
 		return fmt.Errorf("empty response")
 	}
 
-	if err := json.NewEncoder(metaFile).Encode(s.SnapshotMeta); err != nil {
+	if err := json.NewEncoder(metaFile).Encode(s); err != nil {
 		return fmt.Errorf("failed to write meta: %w", err)
 	}
 

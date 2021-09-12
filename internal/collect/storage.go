@@ -28,26 +28,27 @@ func newStorage(workdir string, filename string) (*Storage, error) {
 	}, nil
 }
 
-func (s *Storage) getPathById(id string) SnapshotPath {
-	return SnapshotPath{
-		Meta:  path.Join(s.workdir, id, "index.json"),
+func (s *Storage) getPathById(id string) *SnapshotPath {
+	return &SnapshotPath{
+		Meta:  path.Join(s.workdir, id, "meta.json"),
 		Body:  path.Join(s.workdir, id, s.filename),
-		Cache: path.Join(s.workdir, id, "cache.dat"),
+		Cache: path.Join(s.workdir, id, "cache.txt"),
 	}
 }
 
-func (s *Storage) PrepareSnapshot(url string, duration int) *Snapshot {
+func (s *Storage) PrepareSnapshot(t string, target *SnapshotTarget) *Snapshot {
 	ts := time.Now()
 	id := strconv.FormatInt(ts.UnixNano(), 36)
 
 	return &Snapshot{
-		SnapshotMeta: SnapshotMeta{
-			ID:       id,
-			Datetime: ts,
-			URL:      url,
-			Duration: duration,
+		SnapshotMeta: &SnapshotMeta{
+			Type:        t,
+			ID:          id,
+			Datetime:    ts,
+			GitRevision: "",
 		},
-		SnapshotPath: s.getPathById(id),
+		SnapshotTarget: target,
+		SnapshotPath:   s.getPathById(id),
 	}
 }
 
@@ -74,14 +75,15 @@ func (s *Storage) List() ([]*Snapshot, error) {
 		}
 		defer metaFile.Close()
 
-		sMeta := SnapshotMeta{}
-		if err := json.NewDecoder(metaFile).Decode(&sMeta); err != nil {
+		snapshot := &Snapshot{}
+		if err := json.NewDecoder(metaFile).Decode(snapshot); err != nil {
 			go (&Snapshot{SnapshotPath: sPath}).Prune()
 			fmt.Fprintf(os.Stderr, "[!] ignored=%v: failed to decode meta file: %v\n", id, err)
 			continue
 		}
 
-		snapshots = append(snapshots, &Snapshot{SnapshotMeta: sMeta, SnapshotPath: sPath})
+		snapshot.SnapshotPath = sPath
+		snapshots = append(snapshots, snapshot)
 	}
 
 	return snapshots, nil

@@ -34,13 +34,13 @@ func (h *handler) getIndex(c echo.Context) error {
 }
 
 func (h *handler) postIndex(c echo.Context) error {
-	req := &collect.Job{}
-	if err := c.Bind(req); err != nil {
+	target := &collect.SnapshotTarget{}
+	if err := c.Bind(target); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse request body: %v", err))
 	}
 
 	go func() {
-		if err := h.collector.Collect(req); err != nil {
+		if err := h.collector.Collect(target); err != nil {
 			log.Error("[!] collector aborted:", err)
 		}
 	}()

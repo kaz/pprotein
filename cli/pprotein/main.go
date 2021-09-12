@@ -28,30 +28,30 @@ func start() error {
 	hub.RegisterHandlers(e.Group("/api/event"))
 
 	pOpts := &collect.Options{
-		WorkDir:   "./data/pprof",
-		FileName:  "profile.pb.gz",
-		EventName: "pprof",
-		EventHub:  hub,
+		Type:     "pprof",
+		WorkDir:  "./data/pprof",
+		FileName: "profile.pb.gz",
+		EventHub: hub,
 	}
 	if err := pprof.RegisterHandlers(e.Group("/api/pprof"), pOpts); err != nil {
 		return err
 	}
 
 	aOpts := &collect.Options{
-		WorkDir:   "./data/httplog",
-		FileName:  "raw.txt",
-		EventName: "httplog",
-		EventHub:  hub,
+		Type:     "httplog",
+		WorkDir:  "./data/httplog",
+		FileName: "raw.txt",
+		EventHub: hub,
 	}
 	if err := alp.RegisterHandlers(e.Group("/api/httplog"), aOpts); err != nil {
 		return err
 	}
 
 	qdOpts := &collect.Options{
-		WorkDir:   "./data/slowlog",
-		FileName:  "raw.txt",
-		EventName: "slowlog",
-		EventHub:  hub,
+		Type:     "slowlog",
+		WorkDir:  "./data/slowlog",
+		FileName: "raw.txt",
+		EventHub: hub,
 	}
 	if err := querydigest.RegisterHandlers(e.Group("/api/slowlog"), qdOpts); err != nil {
 		return err
