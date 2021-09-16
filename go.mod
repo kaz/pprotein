@@ -7,6 +7,7 @@ require (
 	github.com/felixge/fgprof v0.9.1
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/pprof v0.0.0-20210827144239-02619b876842
 	github.com/gorilla/mux v1.8.0
 	github.com/labstack/echo v3.3.10+incompatible
