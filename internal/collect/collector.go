@@ -8,22 +8,25 @@ import (
 	"sync"
 
 	"github.com/kaz/pprotein/internal/event"
+	"github.com/kaz/pprotein/internal/storage"
 )
 
 type (
 	Options struct {
-		Type     string
-		WorkDir  string
-		FileName string
+		Type string
+		Ext  string
+
+		Store    storage.Storage
 		EventHub *event.Hub
 	}
 
 	Collector struct {
-		typeLabel string
+		typ string
+		ext string
 
-		storage   *Storage
-		processor Processor
+		store     storage.Storage
 		eventHub  *event.Hub
+		processor Processor
 
 		mu   *sync.RWMutex
 		data map[string]*Entry
@@ -44,28 +47,29 @@ const (
 )
 
 func New(processor Processor, opts *Options) (*Collector, error) {
-	store, err := newStorage(opts.WorkDir, opts.FileName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize storage: %w", err)
-	}
-
 	c := &Collector{
-		typeLabel: opts.Type,
+		typ: opts.Type,
+		ext: opts.Ext,
 
-		storage:   store,
-		processor: newCachedProcessor(processor),
+		store:     opts.Store,
 		eventHub:  opts.EventHub,
+		processor: newCachedProcessor(processor, opts.Store),
 
 		mu:   &sync.RWMutex{},
 		data: map[string]*Entry{},
 	}
 
-	snapshots, err := store.List()
+	rawSnapshots, err := c.store.GetSnapshots(c.typ)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list snapshots: %w", err)
+		return nil, fmt.Errorf("failed to get snapshots: %w", err)
 	}
 
-	for _, snapshot := range snapshots {
+	for _, raw := range rawSnapshots {
+		snapshot := &Snapshot{store: c.store}
+		if err := snapshot.unmarshal(raw); err != nil {
+			log.Printf("[!] unmarshalling snapshot failed: %v", err)
+			continue
+		}
 		go c.runProcessor(snapshot)
 	}
 
@@ -139,7 +143,7 @@ func (c *Collector) Collect(target *SnapshotTarget) error {
 		return fmt.Errorf("URL and Duration cannot be nil")
 	}
 
-	snapshot := c.storage.PrepareSnapshot(c.typeLabel, target)
+	snapshot := newSnapshot(c.store, c.typ, c.ext, target)
 	c.updateStatus(snapshot, StatusPending, "Collecting")
 
 	if err := snapshot.Collect(); err != nil {

@@ -20,7 +20,12 @@ func (p *processor) Cacheable() bool {
 }
 
 func (p *processor) Process(snapshot *collect.Snapshot) (io.ReadCloser, error) {
-	cmd := exec.Command("alp", "ltsv", "--config", p.confPath, "--format", "tsv", "--file", snapshot.Body)
+	bodyPath, err := snapshot.BodyPath()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find snapshot body: %w", err)
+	}
+
+	cmd := exec.Command("alp", "ltsv", "--config", p.confPath, "--format", "tsv", "--file", bodyPath)
 
 	res, err := cmd.Output()
 	if err != nil {

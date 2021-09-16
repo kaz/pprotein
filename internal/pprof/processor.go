@@ -37,11 +37,16 @@ func (p *processor) Process(snapshot *collect.Snapshot) (io.ReadCloser, error) {
 		return nil
 	}
 
+	bodyPath, err := snapshot.BodyPath()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find snapshot body: %w", err)
+	}
+
 	options := &driver.Options{
 		Flagset: NewFlagSet([]string{
 			"-no_browser",
 			"-http", "0:0",
-			snapshot.Body,
+			bodyPath,
 		}),
 		HTTPServer: registerProfileHandlers,
 	}

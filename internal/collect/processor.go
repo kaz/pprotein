@@ -1,9 +1,11 @@
 package collect
 
 import (
+	"bytes"
 	"fmt"
 	"io"
-	"os"
+
+	"github.com/kaz/pprotein/internal/storage"
 )
 
 type (
@@ -14,25 +16,28 @@ type (
 
 	cachedProcessor struct {
 		internal Processor
+		store    storage.Storage
 	}
 )
 
-func newCachedProcessor(internal Processor) Processor {
-	return &cachedProcessor{internal}
+func newCachedProcessor(internal Processor, store storage.Storage) Processor {
+	return &cachedProcessor{internal, store}
 }
 
 func (p *cachedProcessor) Process(snapshot *Snapshot) (io.ReadCloser, error) {
-	if _, err := os.Stat(snapshot.Cache); err == nil {
+	if ok, err := p.store.HasCache(snapshot.ID); err != nil {
+		return nil, fmt.Errorf("failed to check cache status: %w", err)
+	} else if ok {
 		return p.serveCached(snapshot)
 	}
 	return p.serveGenerated(snapshot)
 }
 func (p *cachedProcessor) serveCached(snapshot *Snapshot) (io.ReadCloser, error) {
-	cache, err := os.Open(snapshot.Cache)
+	cache, err := p.store.GetCacheContent(snapshot.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
+		return nil, fmt.Errorf("failed to read cache: %w", err)
 	}
-	return cache, nil
+	return io.NopCloser(bytes.NewBuffer(cache)), nil
 }
 func (p *cachedProcessor) serveGenerated(snapshot *Snapshot) (io.ReadCloser, error) {
 	r, err := p.internal.Process(snapshot)
@@ -44,16 +49,14 @@ func (p *cachedProcessor) serveGenerated(snapshot *Snapshot) (io.ReadCloser, err
 		return r, nil
 	}
 
-	cache, err := os.Create(snapshot.Cache)
+	cacheContent, err := io.ReadAll(r)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create file: %w", err)
+		return nil, fmt.Errorf("failed to read data: %w", err)
 	}
 
-	if _, err := io.Copy(cache, r); err != nil {
-		return nil, fmt.Errorf("failed to copy: %w", err)
+	if err := p.store.PutCache(snapshot.ID, cacheContent); err != nil {
+		return nil, fmt.Errorf("failed to create cache: %w", err)
 	}
-	cache.Close()
-
 	return p.serveCached(snapshot)
 }
 

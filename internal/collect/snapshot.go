@@ -6,17 +6,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kaz/pprotein/internal/storage"
 )
 
 type (
 	Snapshot struct {
+		store storage.Storage
+
 		*SnapshotMeta
 		*SnapshotTarget
-		*SnapshotPath `json:"-"`
 	}
 	SnapshotMeta struct {
 		Type        string
@@ -30,18 +32,30 @@ type (
 		URL      string
 		Duration int
 	}
-	SnapshotPath struct {
-		Meta  string
-		Body  string
-		Cache string
-	}
 )
 
-func (s *Snapshot) Prune() error {
-	if err := os.Rename(s.Meta, s.Meta+".ignored"); err != nil {
-		return fmt.Errorf("failed to rename meta file: %w", err)
+func newSnapshot(store storage.Storage, typ string, ext string, target *SnapshotTarget) *Snapshot {
+	ts := time.Now()
+	id := strconv.FormatInt(ts.UnixNano(), 36) + ext
+
+	return &Snapshot{
+		store: store,
+
+		SnapshotMeta: &SnapshotMeta{
+			Type:        typ,
+			ID:          id,
+			Datetime:    ts,
+			GitRevision: "",
+		},
+		SnapshotTarget: target,
 	}
-	return nil
+}
+
+func (s *Snapshot) unmarshal(raw []byte) error {
+	return json.Unmarshal(raw, s)
+}
+func (s *Snapshot) marshal() ([]byte, error) {
+	return json.Marshal(s)
 }
 
 func (s *Snapshot) Collect() error {
@@ -68,38 +82,36 @@ func (s *Snapshot) Collect() error {
 		r = cr
 	}
 
+	bodyContent, err := io.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("failed to read body: %w", err)
+	}
 	s.GitRevision = resp.Header.Get("X-GIT-REVISION")
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(r)
-		return fmt.Errorf("http error: status=%v, body=%v", resp.StatusCode, string(body))
+		return fmt.Errorf("http error: status=%v, body=%v", resp.StatusCode, string(bodyContent))
+	}
+	if len(bodyContent) == 0 {
+		return fmt.Errorf("received empty content")
 	}
 
-	if err := os.Mkdir(path.Dir(s.Meta), 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	metaFile, err := os.Create(s.Meta)
+	serialized, err := s.marshal()
 	if err != nil {
-		return fmt.Errorf("failed to create meta file: %w", err)
+		return fmt.Errorf("failed to serialize: %w", err)
 	}
-	defer metaFile.Close()
-
-	bodyFile, err := os.Create(s.Body)
-	if err != nil {
-		return fmt.Errorf("failed to create body file: %w", err)
-	}
-	defer bodyFile.Close()
-
-	if written, err := io.Copy(bodyFile, r); err != nil {
-		return fmt.Errorf("failed to write body: %w", err)
-	} else if written == 0 {
-		return fmt.Errorf("empty response")
-	}
-
-	if err := json.NewEncoder(metaFile).Encode(s); err != nil {
+	if err := s.store.PutSnapshot(s.ID, s.Type, serialized); err != nil {
 		return fmt.Errorf("failed to write meta: %w", err)
 	}
-
+	if err := s.store.PutBlob(s.ID, bodyContent); err != nil {
+		return fmt.Errorf("failed to write body: %w", err)
+	}
 	return nil
+}
+
+func (s *Snapshot) BodyPath() (string, error) {
+	return s.store.GetBlobPath(s.ID)
+}
+
+func (s *Snapshot) Prune() error {
+	return s.store.DeleteSnapshot(s.ID)
 }

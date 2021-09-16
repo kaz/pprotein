@@ -18,7 +18,12 @@ func (p *processor) Cacheable() bool {
 }
 
 func (p *processor) Process(snapshot *collect.Snapshot) (io.ReadCloser, error) {
-	cmd := exec.Command("pt-query-digest", "--limit", "100%", "--output", "json", snapshot.Body)
+	bodyPath, err := snapshot.BodyPath()
+	if err != nil {
+		return nil, fmt.Errorf("failed to find snapshot body: %w", err)
+	}
+
+	cmd := exec.Command("pt-query-digest", "--limit", "100%", "--output", "json", bodyPath)
 
 	res, err := cmd.Output()
 	if err != nil {

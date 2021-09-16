@@ -23,7 +23,7 @@ type (
 var sampleConfig []byte
 
 func RegisterHandlers(g *echo.Group, opts *collect.Options) error {
-	h, err := newHandler(opts.WorkDir)
+	h, err := newHandler("data")
 	if err != nil {
 		return fmt.Errorf("failed to initialize handler: %w", err)
 	}

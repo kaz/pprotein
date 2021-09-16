@@ -10,6 +10,7 @@ import (
 	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/querydigest"
 	"github.com/kaz/pprotein/internal/pprof"
+	"github.com/kaz/pprotein/internal/storage"
 	"github.com/kaz/pprotein/view"
 	"github.com/labstack/echo/v4"
 )
@@ -17,6 +18,11 @@ import (
 func start() error {
 	e := echo.New()
 	echov4.Integrate(e)
+
+	store, err := storage.New("data")
+	if err != nil {
+		return err
+	}
 
 	fs, err := view.FS()
 	if err != nil {
@@ -29,8 +35,8 @@ func start() error {
 
 	pOpts := &collect.Options{
 		Type:     "pprof",
-		WorkDir:  "./data/pprof",
-		FileName: "profile.pb.gz",
+		Ext:      "-pprof.pb.gz",
+		Store:    store,
 		EventHub: hub,
 	}
 	if err := pprof.RegisterHandlers(e.Group("/api/pprof"), pOpts); err != nil {
@@ -39,8 +45,8 @@ func start() error {
 
 	aOpts := &collect.Options{
 		Type:     "httplog",
-		WorkDir:  "./data/httplog",
-		FileName: "raw.txt",
+		Ext:      "-httplog.log",
+		Store:    store,
 		EventHub: hub,
 	}
 	if err := alp.RegisterHandlers(e.Group("/api/httplog"), aOpts); err != nil {
@@ -49,8 +55,8 @@ func start() error {
 
 	qdOpts := &collect.Options{
 		Type:     "slowlog",
-		WorkDir:  "./data/slowlog",
-		FileName: "raw.txt",
+		Ext:      "-slowlog.log",
+		Store:    store,
 		EventHub: hub,
 	}
 	if err := querydigest.RegisterHandlers(e.Group("/api/slowlog"), qdOpts); err != nil {
