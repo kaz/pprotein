@@ -30,5 +30,6 @@ func (p *processor) Process(snapshot *collect.Snapshot) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("external process aborted: %w", err)
 	}
 
-	return io.NopCloser(bytes.NewBuffer(res)), nil
+	starts := bytes.IndexByte(res, '{')
+	return io.NopCloser(bytes.NewBuffer(res[starts:])), nil
 }

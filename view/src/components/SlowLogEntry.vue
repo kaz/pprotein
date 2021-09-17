@@ -161,8 +161,12 @@ export default defineComponent({
     },
   },
   async beforeCreate() {
-    const resp = await fetch(`/api/slowlog/${this.$route.params.id}`);
-    this.slowData = await resp.json();
+    try {
+      const resp = await fetch(`/api/slowlog/${this.$route.params.id}`);
+      this.slowData = await resp.json();
+    } catch (e) {
+      this.summary = `Error: ${e instanceof Error ? e.message : e}`;
+    }
   },
   methods: {
     test() {
