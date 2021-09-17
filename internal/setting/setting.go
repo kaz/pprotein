@@ -10,50 +10,59 @@ import (
 )
 
 type (
-	Handler struct {
-		id       string
-		defaults string
-
+	handler struct {
 		store storage.Storage
+
+		id   string
+		Path string
 	}
 )
 
-func NewHandler(id string, defaults string, store storage.Storage) *Handler {
-	return &Handler{
-		id:       id,
-		defaults: defaults,
-		store:    store,
+func NewHandler(store storage.Storage, id string, defaults []byte) (*handler, error) {
+	ok, err := store.HasBlob(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check blob state: %v", err)
 	}
+	if !ok {
+		if err := store.PutBlob(id, defaults); err != nil {
+			return nil, fmt.Errorf("failed to save default value: %v", err)
+		}
+	}
+
+	path, err := store.GetBlobPath(id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find blob path: %v", err)
+	}
+
+	return &handler{
+		store: store,
+		id:    id,
+		Path:  path,
+	}, nil
 }
 
-func (h *Handler) Register(g *echo.Group) {
+func (h *handler) Register(g *echo.Group) {
 	g.GET("", h.get)
 	g.POST("", h.post)
 }
 
-func (h *Handler) get(c echo.Context) error {
-	ok, err := h.store.HasBlob(h.id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to check blob state: %v", err))
-	}
-	if !ok {
-		return c.String(http.StatusOK, h.defaults)
-	}
-
-	path, err := h.store.GetBlobPath(h.id)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to get blob: %v", err))
-	}
-	return c.File(path)
+func (h *handler) get(c echo.Context) error {
+	return c.File(h.Path)
 }
-func (h *Handler) post(c echo.Context) error {
+func (h *handler) post(c echo.Context) error {
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to read body: %v", err))
 	}
 
-	if err := h.store.PutBlob(h.id, body); err != nil {
+	pretty, err := sanitize(h.id, body)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse body: %v", err))
+	}
+
+	if err := h.store.PutBlob(h.id, pretty); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to save: %v", err))
 	}
+
 	return c.NoContent(http.StatusNoContent)
 }

@@ -1,16 +1,12 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import GroupConfig from "./components/GroupConfig.vue";
+import EntryList from "./components/EntryList.vue";
 import GroupEntry from "./components/GroupEntry.vue";
 import GroupIndex from "./components/GroupIndex.vue";
 import GroupList from "./components/GroupList.vue";
-import HttpLogConfig from "./components/HttpLogConfig.vue";
 import HttpLogEntry from "./components/HttpLogEntry.vue";
-import HttpLogList from "./components/HttpLogList.vue";
 import PProfEntry from "./components/PProfEntry.vue";
-import PProfList from "./components/PProfList.vue";
 import SettingList from "./components/SettingList.vue";
 import SlowLogEntry from "./components/SlowLogEntry.vue";
-import SlowLogList from "./components/SlowLogList.vue";
 
 export default createRouter({
   history: createWebHashHistory(),
@@ -24,13 +20,6 @@ export default createRouter({
       component: GroupList,
       meta: {
         title: "group",
-      },
-    },
-    {
-      path: "/group/config/",
-      component: GroupConfig,
-      meta: {
-        title: "group:config",
       },
     },
     {
@@ -69,9 +58,12 @@ export default createRouter({
     },
     {
       path: "/pprof/",
-      component: PProfList,
+      component: EntryList,
       meta: {
         title: "pprof",
+      },
+      props: {
+        endpoint: "pprof",
       },
     },
     {
@@ -83,16 +75,12 @@ export default createRouter({
     },
     {
       path: "/httplog/",
-      component: HttpLogList,
+      component: EntryList,
       meta: {
         title: "httplog",
       },
-    },
-    {
-      path: "/httplog/config/",
-      component: HttpLogConfig,
-      meta: {
-        title: "httplog:config",
+      props: {
+        endpoint: "httplog",
       },
     },
     {
@@ -104,9 +92,12 @@ export default createRouter({
     },
     {
       path: "/slowlog/",
-      component: SlowLogList,
+      component: EntryList,
       meta: {
         title: "slowlog",
+      },
+      props: {
+        endpoint: "slowlog",
       },
     },
     {

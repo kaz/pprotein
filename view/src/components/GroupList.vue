@@ -2,9 +2,6 @@
   <section>
     <div class="control">
       <button @click="collect">Collect</button>
-      <router-link v-slot="{ navigate }" to="/group/config/" custom>
-        <button @click="navigate">Configure</button>
-      </router-link>
     </div>
     <details v-for="(group, i) in $store.state.groups" :key="group" :open="!i">
       <summary>Group: {{ group }}</summary>
@@ -13,13 +10,14 @@
         :entries="$store.getters.entriesByGroup(group)"
       />
     </details>
+    <div v-if="!$store.state.groups.length">No entries!!</div>
   </section>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import { createGroupId, addCollectJob } from "../collect";
-import { Config, getGroupConfig } from "./GroupConfig.vue";
+import { Config } from "../store";
 import GroupEntriesTable from "./GroupEntriesTable.vue";
 
 export default defineComponent({
@@ -28,7 +26,7 @@ export default defineComponent({
   },
   methods: {
     async collect() {
-      const config = JSON.parse(getGroupConfig()) as Config[];
+      const config = this.$store.getters.groupConfig as Config[];
 
       const GroupId = createGroupId();
       await Promise.all(
@@ -51,10 +49,6 @@ details {
 }
 
 .control {
-  text-align: right;
-
-  button {
-    margin-left: 0.5em;
-  }
+  margin-bottom: 2em;
 }
 </style>

@@ -11,17 +11,26 @@ import (
 
 type (
 	handler struct {
+		processor collect.Processor
+		opts      *collect.Options
 		collector *collect.Collector
 	}
 )
 
-func RegisterHandlers(g *echo.Group, processor collect.Processor, opts *collect.Options) error {
-	collector, err := collect.New(processor, opts)
+func NewHandler(processor collect.Processor, opts *collect.Options) *handler {
+	return &handler{
+		processor: processor,
+		opts:      opts,
+	}
+}
+
+func (h *handler) Register(g *echo.Group) error {
+	var err error
+	h.collector, err = collect.New(h.processor, h.opts)
 	if err != nil {
 		return fmt.Errorf("failed to initialize collector: %w", err)
 	}
 
-	h := &handler{collector: collector}
 	g.GET("", h.getIndex)
 	g.POST("", h.postIndex)
 	g.GET("/:id", h.getId)

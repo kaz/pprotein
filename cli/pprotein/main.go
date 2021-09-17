@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"net/http"
 	"os"
 
@@ -15,6 +16,15 @@ import (
 	"github.com/kaz/pprotein/view"
 	"github.com/labstack/echo/v4"
 )
+
+//go:embed group.json
+var defaultGroupJson []byte
+
+//go:embed repository.json
+var defaultRepositoryJson []byte
+
+//go:embed alp.yml
+var defaultAlpYml []byte
 
 func start() error {
 	e := echo.New()
@@ -31,9 +41,23 @@ func start() error {
 	}
 	e.GET("/*", echo.WrapHandler(http.FileServer(http.FS(fs))))
 
-	setting.NewHandler("group.json", "TODO", store).Register(e.Group("/api/setting/group"))
-	setting.NewHandler("repository.json", "TODO", store).Register(e.Group("/api/setting/repository"))
-	setting.NewHandler("httplog_config.yml", "TODO", store).Register(e.Group("/api/setting/httplog"))
+	groupJson, err := setting.NewHandler(store, "group.json", defaultGroupJson)
+	if err != nil {
+		return err
+	}
+	groupJson.Register(e.Group("/api/setting/group"))
+
+	repositoryJson, err := setting.NewHandler(store, "repository.json", defaultRepositoryJson)
+	if err != nil {
+		return err
+	}
+	repositoryJson.Register(e.Group("/api/setting/repository"))
+
+	alpYml, err := setting.NewHandler(store, "alp.yml", defaultAlpYml)
+	if err != nil {
+		return err
+	}
+	alpYml.Register(e.Group("/api/setting/httplog"))
 
 	hub := event.NewHub()
 	hub.RegisterHandlers(e.Group("/api/event"))
@@ -44,7 +68,7 @@ func start() error {
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := pprof.RegisterHandlers(e.Group("/api/pprof"), pOpts); err != nil {
+	if err := pprof.NewHandler(pOpts).Register(e.Group("/api/pprof")); err != nil {
 		return err
 	}
 
@@ -54,17 +78,17 @@ func start() error {
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := alp.RegisterHandlers(e.Group("/api/httplog"), aOpts); err != nil {
+	if err := alp.NewHandler(alpYml.Path, aOpts).Register(e.Group("/api/httplog")); err != nil {
 		return err
 	}
 
-	qdOpts := &collect.Options{
+	qOpts := &collect.Options{
 		Type:     "slowlog",
 		Ext:      "-slowlog.log",
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := querydigest.RegisterHandlers(e.Group("/api/slowlog"), qdOpts); err != nil {
+	if err := querydigest.NewHandler(qOpts).Register(e.Group("/api/slowlog")); err != nil {
 		return err
 	}
 

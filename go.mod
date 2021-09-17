@@ -13,6 +13,7 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.5.0
 	github.com/labstack/gommon v0.3.0
+	gopkg.in/yaml.v2 v2.4.0
 	modernc.org/sqlite v1.13.0
 )
 
@@ -57,7 +58,6 @@ require (
 	golang.org/x/tools v0.0.0-20201124115921-2c860bdd6e78 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
 	modernc.org/cc/v3 v3.34.0 // indirect
 	modernc.org/ccgo/v3 v3.11.2 // indirect

@@ -26,27 +26,6 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-import { createGroupId, addCollectJob } from "../collect";
-import { Config, getGroupConfig } from "./GroupConfig.vue";
-
-export default defineComponent({
-  methods: {
-    async collect() {
-      const config = JSON.parse(getGroupConfig()) as Config[];
-
-      const GroupId = createGroupId();
-      await Promise.all(
-        config.map(({ Type, URL, Duration, Label }) =>
-          addCollectJob(Type, { URL, Duration, Label, GroupId })
-        )
-      );
-    },
-  },
-});
-</script>
-
 <style scoped lang="scss">
 .container {
   display: flex;

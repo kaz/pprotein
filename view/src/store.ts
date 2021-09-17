@@ -24,6 +24,8 @@ type SettingRecord = {
   value: string;
 };
 
+export type Config = { Type: string } & Omit<SnapshotTarget, "GroupId">;
+
 const state = {
   endpoints: ["pprof", "httplog", "slowlog"],
   groups: [] as string[],
@@ -126,6 +128,9 @@ export default createStore({
       return getters
         .entriesByGroup(groupId)
         .filter((e: Entry) => e.Status == "ok");
+    },
+    groupConfig: (state): Config[] => {
+      return JSON.parse(state.settings["group"]?.value || "[]");
     },
   },
 });

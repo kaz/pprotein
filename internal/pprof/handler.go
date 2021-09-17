@@ -12,19 +12,24 @@ import (
 
 type (
 	handler struct {
+		opts      *collect.Options
 		collector *collect.Collector
 	}
 )
 
-func RegisterHandlers(g *echo.Group, opts *collect.Options) error {
+func NewHandler(opts *collect.Options) *handler {
+	return &handler{opts: opts}
+}
+
+func (h *handler) Register(g *echo.Group) error {
 	p := &processor{mu: &sync.Mutex{}, route: g}
 
-	collector, err := collect.New(p, opts)
+	var err error
+	h.collector, err = collect.New(p, h.opts)
 	if err != nil {
 		return fmt.Errorf("failed to initialize collector: %w", err)
 	}
 
-	h := &handler{collector: collector}
 	g.GET("", h.getIndex)
 	g.POST("", h.postIndex)
 

@@ -8,11 +8,19 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func RegisterHandlers(g *echo.Group, opts *collect.Options) error {
-	p := &processor{}
-	if err := extproc.RegisterHandlers(g, p, opts); err != nil {
+type (
+	handler struct {
+		opts *collect.Options
+	}
+)
+
+func NewHandler(opts *collect.Options) *handler {
+	return &handler{opts: opts}
+}
+
+func (h *handler) Register(g *echo.Group) error {
+	if err := extproc.NewHandler(&processor{}, h.opts).Register(g); err != nil {
 		return fmt.Errorf("failed to register extproc handlers: %w", err)
 	}
-
 	return nil
 }

@@ -1,0 +1,20 @@
+[
+	{
+		"Duration": 10,
+		"Label": "101-localhost",
+		"Type": "pprof",
+		"URL": "http://localhost:9000/debug/pprof/profile"
+	},
+	{
+		"Duration": 10,
+		"Label": "102-localhost",
+		"Type": "httplog",
+		"URL": "http://localhost:9000/debug/log/httplog"
+	},
+	{
+		"Duration": 10,
+		"Label": "103-localhost",
+		"Type": "slowlog",
+		"URL": "http://localhost:9000/debug/log/slowlog"
+	}
+]
