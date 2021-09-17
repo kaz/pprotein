@@ -1,2 +1,3 @@
 matching_groups:
-  - ^/api/schedules/.+$
+  - ^/api/mock/.+[0-9]$
+  - ^/api/mock/.+[a-z]$
