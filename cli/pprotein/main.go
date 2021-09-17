@@ -10,6 +10,7 @@ import (
 	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/querydigest"
 	"github.com/kaz/pprotein/internal/pprof"
+	"github.com/kaz/pprotein/internal/setting"
 	"github.com/kaz/pprotein/internal/storage"
 	"github.com/kaz/pprotein/view"
 	"github.com/labstack/echo/v4"
@@ -29,6 +30,10 @@ func start() error {
 		return err
 	}
 	e.GET("/*", echo.WrapHandler(http.FileServer(http.FS(fs))))
+
+	setting.NewHandler("group.json", "TODO", store).Register(e.Group("/api/setting/group"))
+	setting.NewHandler("repository.json", "TODO", store).Register(e.Group("/api/setting/repository"))
+	setting.NewHandler("httplog_config.yml", "TODO", store).Register(e.Group("/api/setting/httplog"))
 
 	hub := event.NewHub()
 	hub.RegisterHandlers(e.Group("/api/event"))

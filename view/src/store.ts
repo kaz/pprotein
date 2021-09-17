@@ -19,26 +19,48 @@ export type SnapshotTarget = {
   Duration: number;
 };
 
+type SettingRecord = {
+  key: string;
+  value: string;
+};
+
 const state = {
   endpoints: ["pprof", "httplog", "slowlog"],
   groups: [] as string[],
   entries: {} as { [key: string]: Entry },
+
+  settingKeys: ["group", "repository", "httplog"],
+  settings: {} as { [key: string]: SettingRecord },
 };
 
-const syncPlugin = (store: Store<typeof state>) => {
+const syncEntriesPlugin = (store: Store<typeof state>) => {
   const es = new EventSource("/api/event");
   es.addEventListener("message", ({ data }) => {
     store.commit("saveEntry", JSON.parse(data));
   });
 
   store.state.endpoints.forEach((endpoint) => {
-    store.dispatch("sync", { endpoint });
+    store.dispatch("fetchEntries", { endpoint });
+  });
+};
+
+const syncSettingsPlugin = (store: Store<typeof state>) => {
+  store.state.settingKeys.forEach(async (key) => {
+    const resp = await fetch(`/api/setting/${key}`);
+    if (!resp.ok) {
+      return alert("HTTP Error: " + (await resp.text()));
+    }
+
+    store.commit("saveSetting", {
+      key,
+      value: await resp.text(),
+    } as SettingRecord);
   });
 };
 
 export default createStore({
   state,
-  plugins: [syncPlugin],
+  plugins: [syncEntriesPlugin, syncSettingsPlugin],
   mutations: {
     saveEntry(state, entry: Entry) {
       entry.Snapshot.Datetime = new Date(entry.Snapshot.Datetime);
@@ -52,9 +74,12 @@ export default createStore({
         state.groups.sort((a, b) => b.localeCompare(a));
       }
     },
+    saveSetting(state, record: SettingRecord) {
+      state.settings[record.key] = record;
+    },
   },
   actions: {
-    async sync({ commit }, { endpoint }: { endpoint: string }) {
+    async fetchEntries({ commit }, { endpoint }: { endpoint: string }) {
       try {
         const resp = await fetch(`/api/${endpoint}`);
         if (!resp.ok) {
@@ -63,6 +88,21 @@ export default createStore({
 
         const entries = (await resp.json()) as Entry[];
         entries.forEach((entry) => commit("saveEntry", entry));
+      } catch (e) {
+        return alert(e);
+      }
+    },
+    async updateSetting({ commit }, { key, value }: SettingRecord) {
+      try {
+        const resp = await fetch(`/api/setting/${key}`, {
+          method: "POST",
+          body: value,
+        });
+        if (!resp.ok) {
+          return alert("HTTP Error: " + (await resp.text()));
+        }
+
+        commit("saveSetting", { key, value } as SettingRecord);
       } catch (e) {
         return alert(e);
       }

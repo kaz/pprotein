@@ -109,3 +109,7 @@ func (s *storageImpl) HasCache(id string) (bool, error) {
 	}
 	return cnt != 0, nil
 }
+func (s *storageImpl) HasBlob(id string) (bool, error) {
+	_, err := os.Stat(path.Join(s.workdir, id))
+	return err == nil, nil
+}

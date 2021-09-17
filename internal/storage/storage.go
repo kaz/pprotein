@@ -12,5 +12,6 @@ type (
 
 		DeleteSnapshot(id string) error
 		HasCache(id string) (bool, error)
+		HasBlob(id string) (bool, error)
 	}
 )
