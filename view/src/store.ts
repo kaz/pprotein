@@ -158,7 +158,13 @@ export default createStore({
     entriesByGroup: (state) => (groupId: string) => {
       return Object.values(state.entries)
         .filter((e) => e.Snapshot.GroupId == groupId)
-        .sort((a, b) => a.Snapshot.Label.localeCompare(b.Snapshot.Label));
+        .sort((a, b) => {
+          const ai = state.endpoints.indexOf(a.Snapshot.Type);
+          const bi = state.endpoints.indexOf(b.Snapshot.Type);
+          return ai == bi
+            ? a.Snapshot.Label.localeCompare(b.Snapshot.Label)
+            : ai - bi;
+        });
     },
     availableEntriesByGroup: (_, getters) => (groupId: string) => {
       return getters
