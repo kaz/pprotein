@@ -5,7 +5,7 @@
         <th>Open</th>
         <th>Type</th>
         <th>Label</th>
-        <th>Revision</th>
+        <th>Commit</th>
         <th>Status</th>
       </tr>
     </thead>
@@ -20,7 +20,7 @@
         </td>
         <td>{{ entry.Snapshot.Type }}</td>
         <td>{{ entry.Snapshot.Label }}</td>
-        <td>{{ entry.Snapshot.GitRevision }}</td>
+        <td><Commit :sha="entry.Snapshot.GitRevision" /></td>
         <td>
           <div :class="`cell ${entry.Status}`"></div>
           {{ entry.Message || entry.Status }}
@@ -33,9 +33,12 @@
 <script lang="ts">
 import { Entry } from "../store";
 import { PropType, defineComponent } from "vue";
+import Commit from "./Commit.vue";
 
 export default defineComponent({
-  name: "GroupEntriesTable",
+  components: {
+    Commit,
+  },
   props: {
     groupId: {
       type: String,

@@ -20,7 +20,6 @@ import { defineComponent } from "vue";
 import { addCollectJob } from "../collect";
 
 export default defineComponent({
-  name: "PproteinForm",
   props: {
     endpoint: {
       type: String,

@@ -4,9 +4,9 @@
       <tr>
         <th>Open</th>
         <th>Datetime</th>
-        <th>Revision</th>
         <th>Source URL</th>
         <th>Duration</th>
+        <th>Commit</th>
         <th>Status</th>
       </tr>
     </thead>
@@ -20,9 +20,9 @@
           >
         </td>
         <td>{{ entry.Snapshot.Datetime.toLocaleString() }}</td>
-        <td>{{ entry.Snapshot.GitRevision }}</td>
         <td>{{ entry.Snapshot.URL }}</td>
         <td>{{ entry.Snapshot.Duration }}</td>
+        <td><Commit :sha="entry.Snapshot.GitRevision" /></td>
         <td>
           <div :class="`cell ${entry.Status}`"></div>
           {{ entry.Message || entry.Status }}
@@ -35,9 +35,12 @@
 <script lang="ts">
 import { Entry } from "../store";
 import { PropType, defineComponent } from "vue";
+import Commit from "./Commit.vue";
 
 export default defineComponent({
-  name: "EntriesTable",
+  components: {
+    Commit,
+  },
   props: {
     entries: {
       type: Array as PropType<Entry[]>,

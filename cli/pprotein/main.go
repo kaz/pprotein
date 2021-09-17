@@ -10,6 +10,7 @@ import (
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/querydigest"
+	"github.com/kaz/pprotein/internal/git"
 	"github.com/kaz/pprotein/internal/pprof"
 	"github.com/kaz/pprotein/internal/setting"
 	"github.com/kaz/pprotein/internal/storage"
@@ -58,6 +59,8 @@ func start() error {
 		return err
 	}
 	alpYml.Register(e.Group("/api/setting/httplog"))
+
+	git.NewHandler(repositoryJson.Path).Register(e.Group("/api/git"))
 
 	hub := event.NewHub()
 	hub.RegisterHandlers(e.Group("/api/event"))
