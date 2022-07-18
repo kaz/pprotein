@@ -158,18 +158,18 @@ func (c *Collector) Collect(target *SnapshotTarget) error {
 	return nil
 }
 
-func (c *Collector) Add(target *SnapshotTarget, content []byte) error {
+func (c *Collector) Add(target *SnapshotTarget, content []byte) (*Snapshot, error) {
 	snapshot := newSnapshot(c.store, c.typ, c.ext, target)
 	c.updateStatus(snapshot, StatusPending, "Collecting")
 
 	if err := snapshot.Add(content); err != nil {
 		c.updateStatus(snapshot, StatusFail, err.Error())
-		return fmt.Errorf("failed to collect: %w", err)
+		return nil, fmt.Errorf("failed to collect: %w", err)
 	}
 
 	if err := c.runProcessor(snapshot); err != nil {
 		c.updateStatus(snapshot, StatusFail, err.Error())
-		return fmt.Errorf("failed to process: %w", err)
+		return nil, fmt.Errorf("failed to process: %w", err)
 	}
-	return nil
+	return snapshot, nil
 }
