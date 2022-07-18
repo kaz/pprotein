@@ -54,7 +54,7 @@ func (h *handler) postIndex(c echo.Context) error {
 		}
 	}()
 
-	return c.NoContent(http.StatusAccepted)
+	return c.NoContent(http.StatusOK)
 }
 
 func (h *handler) getId(c echo.Context) error {

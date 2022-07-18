@@ -59,7 +59,7 @@ func New(processor Processor, opts *Options) (*Collector, error) {
 		data: map[string]*Entry{},
 	}
 
-	rawSnapshots, err := c.store.GetSnapshots(c.typ)
+	rawSnapshots, err := c.store.GetAll(c.typ)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get snapshots: %w", err)
 	}
