@@ -105,10 +105,10 @@ func (s *Snapshot) Collect() error {
 	if err != nil {
 		return fmt.Errorf("failed to serialize: %w", err)
 	}
-	if err := s.store.PutSnapshot(s.ID, s.Type, serialized); err != nil {
+	if err := s.store.Put(s.Type, s.ID, serialized); err != nil {
 		return fmt.Errorf("failed to write meta: %w", err)
 	}
-	if err := s.store.PutAsFile(s.ID, bodyContent); err != nil {
+	if err := s.store.PutFile(s.ID, bodyContent); err != nil {
 		return fmt.Errorf("failed to write body: %w", err)
 	}
 	return nil
@@ -119,5 +119,5 @@ func (s *Snapshot) BodyPath() (string, error) {
 }
 
 func (s *Snapshot) Prune() error {
-	return s.store.DeleteSnapshot(s.ID)
+	return s.store.Delete(s.Type, s.ID)
 }

@@ -24,7 +24,7 @@ func NewHandler(store storage.Storage, id string, defaults []byte) (*handler, er
 		return nil, fmt.Errorf("failed to check blob state: %v", err)
 	}
 	if !ok {
-		if err := store.PutAsFile(id, defaults); err != nil {
+		if err := store.PutFile(id, defaults); err != nil {
 			return nil, fmt.Errorf("failed to save default value: %v", err)
 		}
 	}
@@ -60,7 +60,7 @@ func (h *handler) post(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to parse body: %v", err))
 	}
 
-	if err := h.store.PutAsFile(h.id, pretty); err != nil {
+	if err := h.store.PutFile(h.id, pretty); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to save: %v", err))
 	}
 

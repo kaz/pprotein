@@ -8,6 +8,8 @@ import (
 	"github.com/kaz/pprotein/internal/storage"
 )
 
+const cacheTypeKey = "cache"
+
 type (
 	Processor interface {
 		Process(snapshot *Snapshot) (io.ReadCloser, error)
@@ -25,7 +27,7 @@ func newCachedProcessor(internal Processor, store storage.Storage) Processor {
 }
 
 func (p *cachedProcessor) Process(snapshot *Snapshot) (io.ReadCloser, error) {
-	if ok, err := p.store.Exists(snapshot.ID); err != nil {
+	if ok, err := p.store.Exists(snapshot.Type, snapshot.ID); err != nil {
 		return nil, fmt.Errorf("failed to check cache status: %w", err)
 	} else if ok {
 		return p.serveCached(snapshot)
@@ -33,7 +35,7 @@ func (p *cachedProcessor) Process(snapshot *Snapshot) (io.ReadCloser, error) {
 	return p.serveGenerated(snapshot)
 }
 func (p *cachedProcessor) serveCached(snapshot *Snapshot) (io.ReadCloser, error) {
-	cache, err := p.store.Get(snapshot.ID)
+	cache, err := p.store.Get(cacheTypeKey, snapshot.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read cache: %w", err)
 	}
@@ -54,7 +56,7 @@ func (p *cachedProcessor) serveGenerated(snapshot *Snapshot) (io.ReadCloser, err
 		return nil, fmt.Errorf("failed to read data: %w", err)
 	}
 
-	if err := p.store.Put(snapshot.ID, cacheContent); err != nil {
+	if err := p.store.Put(cacheTypeKey, snapshot.ID, cacheContent); err != nil {
 		return nil, fmt.Errorf("failed to create cache: %w", err)
 	}
 	return p.serveCached(snapshot)
