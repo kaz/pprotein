@@ -1,0 +1,39 @@
+before:
+  hooks:
+    - go mod tidy
+    - npm --prefix view ci
+    - npm --prefix view run build
+builds:
+  - id: pprotein
+    binary: pprotein
+    main: ./cli/pprotein
+    flags:
+      - -trimpath
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+  - id: pprotein-agent
+    binary: pprotein-agent
+    main: ./cli/pprotein-agent
+    flags:
+      - -trimpath
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - files:
+      - nothing*
+checksum:
+  disable: true
+changelog:
+  skip: true

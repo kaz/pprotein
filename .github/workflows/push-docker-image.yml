@@ -1,4 +1,4 @@
-name: build and push docker image
+name: Push docker image
 
 on:
   push:
@@ -6,14 +6,14 @@ on:
       - master
 
 jobs:
-  build_and_push:
+  push:
     runs-on: ubuntu-latest
     permissions:
       packages: write
       contents: read
     steps:
-      - uses: actions/checkout@v2
-      - uses: docker/login-action@v1
+      - uses: actions/checkout@v3
+      - uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
