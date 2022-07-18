@@ -10,6 +10,7 @@ import (
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/querydigest"
+	"github.com/kaz/pprotein/internal/memo"
 	"github.com/kaz/pprotein/internal/pprof"
 	"github.com/kaz/pprotein/internal/storage"
 	"github.com/kaz/pprotein/view"
@@ -77,6 +78,16 @@ func start() error {
 		EventHub: hub,
 	}
 	if err := querydigest.NewHandler(qOpts).Register(api.Group("/slowlog")); err != nil {
+		return err
+	}
+
+	mOpts := &collect.Options{
+		Type:     "memo",
+		Ext:      "-memo.log",
+		Store:    store,
+		EventHub: hub,
+	}
+	if err := memo.NewHandler(mOpts).Register(e.Group("/api/memo")); err != nil {
 		return err
 	}
 

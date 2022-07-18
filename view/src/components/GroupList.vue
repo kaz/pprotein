@@ -26,6 +26,7 @@
         :group-id="group"
         :entries="$store.getters.entriesByGroup(group)"
       />
+      <AddMemo :group-id="group" />
     </details>
     <div v-if="!$store.state.groups.length">No entries!!</div>
   </section>
@@ -34,10 +35,12 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import GroupEntriesTable from "./GroupEntriesTable.vue";
+import AddMemo from "./AddMemo.vue";
 
 export default defineComponent({
   components: {
     GroupEntriesTable,
+    AddMemo,
   },
   data() {
     return {
