@@ -20,7 +20,7 @@
         </td>
         <td>{{ entry.Snapshot.Type }}</td>
         <td>{{ entry.Snapshot.Label }}</td>
-        <td><Commit :sha="entry.Snapshot.GitRevision" /></td>
+        <td><Commit :repository="entry.Snapshot.Repository" /></td>
         <td>
           <div :class="`cell ${entry.Status}`"></div>
           {{ entry.Message || entry.Status }}
@@ -31,8 +31,8 @@
 </template>
 
 <script lang="ts">
+import { defineComponent, PropType } from "vue";
 import { Entry } from "../store";
-import { PropType, defineComponent } from "vue";
 import Commit from "./Commit.vue";
 
 export default defineComponent({

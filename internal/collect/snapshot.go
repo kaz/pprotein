@@ -2,14 +2,16 @@ package collect
 
 import (
 	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/goccy/go-json"
+	"github.com/kaz/pprotein/internal/git"
 	"github.com/kaz/pprotein/internal/storage"
 )
 
@@ -21,10 +23,10 @@ type (
 		*SnapshotTarget
 	}
 	SnapshotMeta struct {
-		Type        string
-		ID          string
-		Datetime    time.Time
-		GitRevision string
+		Type       string
+		ID         string
+		Datetime   time.Time
+		Repository *git.RepositoryInfo
 	}
 	SnapshotTarget struct {
 		GroupId  string
@@ -42,10 +44,10 @@ func newSnapshot(store storage.Storage, typ string, ext string, target *Snapshot
 		store: store,
 
 		SnapshotMeta: &SnapshotMeta{
-			Type:        typ,
-			ID:          id,
-			Datetime:    ts,
-			GitRevision: "",
+			Type:       typ,
+			ID:         id,
+			Datetime:   ts,
+			Repository: nil,
 		},
 		SnapshotTarget: target,
 	}
@@ -86,7 +88,11 @@ func (s *Snapshot) Collect() error {
 	if err != nil {
 		return fmt.Errorf("failed to read body: %w", err)
 	}
-	s.GitRevision = resp.Header.Get("X-GIT-REVISION")
+
+	s.Repository = &git.RepositoryInfo{}
+	if err := json.Unmarshal([]byte(resp.Header.Get("X-Git-Repository")), s.Repository); err != nil {
+		log.Printf("failed to parse git repository: %v", err)
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("http error: status=%v, body=%v", resp.StatusCode, string(bodyContent))

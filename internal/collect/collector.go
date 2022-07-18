@@ -1,12 +1,12 @@
 package collect
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"sync"
 
+	"github.com/goccy/go-json"
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/storage"
 )

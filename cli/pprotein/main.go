@@ -10,7 +10,6 @@ import (
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/querydigest"
-	"github.com/kaz/pprotein/internal/git"
 	"github.com/kaz/pprotein/internal/pprof"
 	"github.com/kaz/pprotein/internal/setting"
 	"github.com/kaz/pprotein/internal/storage"
@@ -20,9 +19,6 @@ import (
 
 //go:embed group.json
 var defaultGroupJson []byte
-
-//go:embed repository.json
-var defaultRepositoryJson []byte
 
 //go:embed alp.yml
 var defaultAlpYml []byte
@@ -48,19 +44,11 @@ func start() error {
 	}
 	groupJson.Register(e.Group("/api/setting/group"))
 
-	repositoryJson, err := setting.NewHandler(store, "repository.json", defaultRepositoryJson)
-	if err != nil {
-		return err
-	}
-	repositoryJson.Register(e.Group("/api/setting/repository"))
-
 	alpYml, err := setting.NewHandler(store, "alp.yml", defaultAlpYml)
 	if err != nil {
 		return err
 	}
 	alpYml.Register(e.Group("/api/setting/httplog"))
-
-	git.NewHandler(repositoryJson.Path).Register(e.Group("/api/git"))
 
 	hub := event.NewHub()
 	hub.RegisterHandlers(e.Group("/api/event"))

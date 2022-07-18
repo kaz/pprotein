@@ -1,28 +1,80 @@
 <template>
-  <span
-    v-if="
-      $props.sha in $store.state.commits &&
-      $store.state.commits[$props.sha].html_url
-    "
-  >
-    <a target="_blank" :href="$store.state.commits[$props.sha].html_url"
-      >[{{ $props.sha.substr(0, 7) }}]</a
-    >
-    {{ $store.state.commits[$props.sha].message }}
-    ({{ $store.state.commits[$props.sha].author.name }})
+  <span v-if="$props.repository">
+    {{ $props.repository.Message }}
+    <br />
+    <small>
+      {{ $props.repository.Author }}
+      <br />
+      <a target="_blank" :href="commitUrl">
+        {{ $props.repository.Hash.substring(0, 7) }}
+      </a>
+      {{ " " }}
+      <a target="_blank" :href="treeUrl">
+        {{ $props.repository.Ref }}
+      </a>
+    </small>
   </span>
   <span v-else>[unknown]</span>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, PropType } from "vue";
+import { RepositoryInfo } from "../store";
 
 export default defineComponent({
   props: {
-    sha: {
-      type: String,
+    repository: {
+      type: Object as PropType<RepositoryInfo | undefined>,
       required: true,
+    },
+  },
+  computed: {
+    repoUrl() {
+      const remoteUrl = this.$props.repository?.Remote;
+      if (!remoteUrl) {
+        return;
+      }
+
+      const sshMatch = remoteUrl.match(/^git@github\.com:(.+?)\/(.+?)\.git$/);
+      if (sshMatch) {
+        return `https://github.com/${sshMatch[1]}/${sshMatch[2]}`;
+      }
+
+      const httpsMatch = remoteUrl.match(
+        /^https:\/\/github\.com\/(.+?)\/(.+?)\.git$/
+      );
+      if (httpsMatch) {
+        return `https://github.com/${httpsMatch[1]}/${httpsMatch[2]}`;
+      }
+
+      return;
+    },
+    commitUrl() {
+      const repoUrl = this.repoUrl;
+      return repoUrl
+        ? `${repoUrl}/commit/${this.$props.repository?.Hash}`
+        : undefined;
+    },
+    treeUrl() {
+      const [, branch] =
+        this.$props.repository?.Ref.match(/^refs\/heads\/(.+)$/) || [];
+
+      const repoUrl = this.repoUrl;
+      return repoUrl && branch ? `${repoUrl}/tree/${branch}` : undefined;
     },
   },
 });
 </script>
+
+<style scoped lang="scss">
+small {
+  display: inline-block;
+  margin-top: 0.8em;
+  font-size: 0.8em;
+  line-height: 0.8em;
+
+  a {
+    text-decoration: none;
+  }
+}
+</style>

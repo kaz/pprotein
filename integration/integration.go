@@ -1,15 +1,22 @@
 package integration
 
 import (
-	"github.com/kaz/pprotein/internal/git"
+	"log"
 	"net/http"
 	"net/http/pprof"
 	"os"
-	"strings"
 
 	"github.com/felixge/fgprof"
+	"github.com/goccy/go-json"
 	"github.com/gorilla/mux"
+	"github.com/kaz/pprotein/internal/git"
 	"github.com/kaz/pprotein/internal/tail"
+)
+
+var (
+	httplogPath       = getEnvOrDefault("PPROTEIN_HTTPLOG", "/var/log/nginx/access.log")
+	slowlogPath       = getEnvOrDefault("PPROTEIN_SLOWLOG", "/var/log/mysql/mysql-slow.log")
+	gitRepositoryPath = getEnvOrDefault("PPROTEIN_GIT_REPOSITORY", ".")
 )
 
 func NewDebugHandler() http.Handler {
@@ -19,9 +26,10 @@ func NewDebugHandler() http.Handler {
 }
 
 func RegisterDebugHandlers(r *mux.Router) {
-	r.Use(gitRevisionResponseMiddleware)
-	r.Handle("/debug/log/httplog", tail.NewTailHandler("/var/log/nginx/access.log"))
-	r.Handle("/debug/log/slowlog", tail.NewTailHandler("/var/log/mysql/mysql-slow.log"))
+	r.Use(gitRepositoryMiddleware)
+
+	r.Handle("/debug/log/httplog", tail.NewTailHandler(httplogPath))
+	r.Handle("/debug/log/slowlog", tail.NewTailHandler(slowlogPath))
 
 	r.Handle("/debug/fgprof", fgprof.Handler())
 
@@ -32,13 +40,23 @@ func RegisterDebugHandlers(r *mux.Router) {
 	r.HandleFunc("/debug/pprof/{h:.*}", pprof.Index)
 }
 
-func gitRevisionResponseMiddleware(next http.Handler) http.Handler {
+func gitRepositoryMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		revision := git.GetCommitHash(getEnvOrDefault("GIT_REPO_DIR", "/home/isucon/repo"))
-		if revision != "" {
-			rw.Header().Set("X-GIT-REVISION", strings.ReplaceAll(revision, "\n", ""))
+		defer next.ServeHTTP(rw, r)
+
+		headInfo, err := git.GetInfo(gitRepositoryPath)
+		if err != nil {
+			log.Printf("failed to get git info: %v", err)
+			return
 		}
-		next.ServeHTTP(rw, r)
+
+		data, err := json.Marshal(headInfo)
+		if err != nil {
+			log.Printf("failed to marshal git info: %v", err)
+			return
+		}
+
+		rw.Header().Set("X-Git-Repository", string(data))
 	})
 }
 

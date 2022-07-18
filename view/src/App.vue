@@ -54,14 +54,13 @@ export default defineComponent({
 
 <style lang="scss">
 * {
-  font-size: 14px;
-  font-family: "Courier Prime", monospace;
   box-sizing: border-box;
+  font-family: "Courier Prime", monospace;
 }
-body,
-html {
+body {
   padding: 0;
   margin: 0;
+  font-size: 14px;
 }
 main {
   display: flex;
