@@ -1,5 +1,5 @@
 <template>
-  <iframe :src="`/api/pprof/${$route.params.id}/`" />
+  <iframe :src="`/api/pprof/${$route.params.id}/flamegraph`" />
 </template>
 
 <script lang="ts">
