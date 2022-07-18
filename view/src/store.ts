@@ -1,7 +1,9 @@
 import { createStore, Store } from "vuex";
 
+export type StatusText = "ok" | "fail" | "pending";
+
 export interface Entry {
-  Status: "ok" | "fail" | "pending";
+  Status: StatusText;
   Message: string;
   Snapshot: SnapshotMeta & SnapshotTarget;
 }

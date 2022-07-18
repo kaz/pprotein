@@ -69,6 +69,10 @@ main {
   width: 100vw;
 }
 
+a {
+  text-decoration: none;
+}
+
 header {
   flex-shrink: 0;
   padding: 1em 2em;
@@ -76,7 +80,6 @@ header {
 
   a {
     color: #fff;
-    text-decoration: none;
   }
 }
 

@@ -1,18 +1,25 @@
 <template>
   <span v-if="$props.repository">
-    {{ $props.repository.Message }}
-    <br />
-    <small>
-      {{ $props.repository.Author }}
+    <a v-if="!openDetail" @click="showDetail" href="javascript:">
+      {{ $props.repository.Message.split("\n")[0] }} …
+    </a>
+    <template v-else>
+      <span>
+        {{ $props.repository.Message }}
+      </span>
       <br />
-      <a target="_blank" :href="commitUrl">
-        {{ $props.repository.Hash.substring(0, 7) }}
-      </a>
-      {{ " " }}
-      <a target="_blank" :href="treeUrl">
-        {{ $props.repository.Ref }}
-      </a>
-    </small>
+      <small>
+        {{ $props.repository.Author }}
+        <br />
+        <a target="_blank" :href="commitUrl">
+          {{ $props.repository.Hash.substring(0, 7) }}
+        </a>
+        {{ " " }}
+        <a target="_blank" :href="treeUrl">
+          {{ $props.repository.Ref }}
+        </a>
+      </small>
+    </template>
   </span>
   <span v-else>[unknown]</span>
 </template>
@@ -24,10 +31,12 @@ import { RepositoryInfo } from "../store";
 export default defineComponent({
   props: {
     repository: {
-      type: Object as PropType<RepositoryInfo | undefined>,
-      required: true,
+      type: Object as PropType<RepositoryInfo>,
     },
   },
+  data: () => ({
+    openDetail: false,
+  }),
   computed: {
     repoUrl() {
       const remoteUrl = this.$props.repository?.Remote;
@@ -63,6 +72,11 @@ export default defineComponent({
       return repoUrl && branch ? `${repoUrl}/tree/${branch}` : undefined;
     },
   },
+  methods: {
+    showDetail() {
+      this.openDetail = true;
+    },
+  },
 });
 </script>
 
@@ -72,9 +86,5 @@ small {
   margin-top: 0.8em;
   font-size: 0.8em;
   line-height: 0.8em;
-
-  a {
-    text-decoration: none;
-  }
 }
 </style>
