@@ -27,7 +27,7 @@ func newCachedProcessor(internal Processor, store storage.Storage) Processor {
 }
 
 func (p *cachedProcessor) Process(snapshot *Snapshot) (io.ReadCloser, error) {
-	if ok, err := p.store.Exists(snapshot.Type, snapshot.ID); err != nil {
+	if ok, err := p.store.Exists(cacheTypeKey, snapshot.ID); err != nil {
 		return nil, fmt.Errorf("failed to check cache status: %w", err)
 	} else if ok {
 		return p.serveCached(snapshot)

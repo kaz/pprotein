@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-
-	_ "modernc.org/sqlite"
 )
 
 type (
