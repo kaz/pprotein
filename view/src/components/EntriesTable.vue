@@ -15,7 +15,11 @@
         <td>
           <router-link
             v-if="entry.Status == `ok`"
-            :to="`/${entry.Snapshot.Type}/${entry.Snapshot.ID}/`"
+            :to="
+              entry.Snapshot.GroupId
+                ? `/group/${entry.Snapshot.GroupId}/${entry.Snapshot.Type}/${entry.Snapshot.ID}/`
+                : `/${entry.Snapshot.Type}/${entry.Snapshot.ID}/`
+            "
           >
             Open
           </router-link>
