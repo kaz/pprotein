@@ -94,7 +94,7 @@ func (cl *Collector) collectAll(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to unmarshal: %v", err))
 	}
 
-	grpId := time.Now().Format("2006/01/02 15:04:05.999999")
+	grpId := time.Now().Format("2006-01-02_15-04-05.999999")
 	eg := &errgroup.Group{}
 
 	ch := make(chan error, len(targets))
