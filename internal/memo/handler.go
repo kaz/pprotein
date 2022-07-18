@@ -86,9 +86,20 @@ func (h *handler) postIndex(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to marshal textValue: %v", err))
 	}
-	if err := h.collector.Add(target, buf); err != nil {
+	snapshot, err := h.collector.Add(target, buf)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to add snapshot: %v", err))
 	}
+
+	eventData, err := json.Marshal(&collect.Entry{
+		Snapshot: snapshot,
+		Status:   "ok",
+		Message:  req.Text,
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to marshal entry: %v", err))
+	}
+	h.opts.EventHub.Publish(eventData)
 
 	return c.NoContent(http.StatusAccepted)
 }
