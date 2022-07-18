@@ -114,6 +114,20 @@ func (s *Snapshot) Collect() error {
 	return nil
 }
 
+func (s *Snapshot) Add(content []byte) error {
+	serialized, err := s.marshal()
+	if err != nil {
+		return fmt.Errorf("failed to serialize: %w", err)
+	}
+	if err := s.store.PutSnapshot(s.ID, s.Type, serialized); err != nil {
+		return fmt.Errorf("failed to write meta: %w", err)
+	}
+	if err := s.store.PutAsFile(s.ID, content); err != nil {
+		return fmt.Errorf("failed to write body: %w", err)
+	}
+	return nil
+}
+
 func (s *Snapshot) BodyPath() (string, error) {
 	return s.store.GetFilePath(s.ID)
 }
