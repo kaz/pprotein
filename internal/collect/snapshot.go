@@ -108,14 +108,14 @@ func (s *Snapshot) Collect() error {
 	if err := s.store.PutSnapshot(s.ID, s.Type, serialized); err != nil {
 		return fmt.Errorf("failed to write meta: %w", err)
 	}
-	if err := s.store.PutBlob(s.ID, bodyContent); err != nil {
+	if err := s.store.PutAsFile(s.ID, bodyContent); err != nil {
 		return fmt.Errorf("failed to write body: %w", err)
 	}
 	return nil
 }
 
 func (s *Snapshot) BodyPath() (string, error) {
-	return s.store.GetBlobPath(s.ID)
+	return s.store.GetFilePath(s.ID)
 }
 
 func (s *Snapshot) Prune() error {

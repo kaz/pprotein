@@ -19,7 +19,7 @@ type (
 var (
 	initsqls = []string{
 		"CREATE TABLE IF NOT EXISTS snapshot (id TEXT PRIMARY KEY, type TEXT, content BLOB, deleted INTEGER)",
-		"CREATE TABLE IF NOT EXISTS cache (id TEXT PRIMARY KEY, content BLOB)",
+		"CREATE TABLE IF NOT EXISTS opaque (id TEXT PRIMARY KEY, content BLOB)",
 		"CREATE INDEX IF NOT EXISTS snapshot_lookup ON snapshot (type, deleted)",
 	}
 )
@@ -48,13 +48,13 @@ func (s *storageImpl) PutSnapshot(id string, typ string, data []byte) error {
 	}
 	return nil
 }
-func (s *storageImpl) PutCache(id string, data []byte) error {
-	if _, err := s.db.Exec("INSERT INTO cache VALUES (?, ?)", id, data); err != nil {
+func (s *storageImpl) Put(id string, data []byte) error {
+	if _, err := s.db.Exec("INSERT INTO opaque VALUES (?, ?)", id, data); err != nil {
 		return fmt.Errorf("failed to insert: %w", err)
 	}
 	return nil
 }
-func (s *storageImpl) PutBlob(id string, data []byte) error {
+func (s *storageImpl) PutAsFile(id string, data []byte) error {
 	file, err := os.Create(path.Join(s.workdir, id))
 	if err != nil {
 		return fmt.Errorf("failed to create file: %w", err)
@@ -85,14 +85,14 @@ func (s *storageImpl) GetSnapshots(typ string) ([][]byte, error) {
 
 	return result, nil
 }
-func (s *storageImpl) GetCacheContent(id string) ([]byte, error) {
+func (s *storageImpl) Get(id string) ([]byte, error) {
 	data := []byte{}
-	if err := s.db.QueryRow("SELECT content FROM cache WHERE id = ?", id).Scan(&data); err != nil {
+	if err := s.db.QueryRow("SELECT content FROM opaque WHERE id = ?", id).Scan(&data); err != nil {
 		return nil, fmt.Errorf("failed to select: %w", err)
 	}
 	return data, nil
 }
-func (s *storageImpl) GetBlobPath(id string) (string, error) {
+func (s *storageImpl) GetFilePath(id string) (string, error) {
 	return path.Join(s.workdir, id), nil
 }
 
@@ -102,14 +102,14 @@ func (s *storageImpl) DeleteSnapshot(id string) error {
 	}
 	return nil
 }
-func (s *storageImpl) HasCache(id string) (bool, error) {
+func (s *storageImpl) Exists(id string) (bool, error) {
 	cnt := 0
-	if err := s.db.QueryRow("SELECT COUNT(1) FROM cache WHERE id = ?", id).Scan(&cnt); err != nil {
+	if err := s.db.QueryRow("SELECT COUNT(1) FROM opaque WHERE id = ?", id).Scan(&cnt); err != nil {
 		return false, fmt.Errorf("failed to select: %w", err)
 	}
 	return cnt != 0, nil
 }
-func (s *storageImpl) HasBlob(id string) (bool, error) {
+func (s *storageImpl) ExistsFile(id string) (bool, error) {
 	_, err := os.Stat(path.Join(s.workdir, id))
 	return err == nil, nil
 }
