@@ -87,7 +87,7 @@ func start() error {
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := memo.NewHandler(mOpts).Register(e.Group("/api/memo")); err != nil {
+	if err := memo.NewHandler(mOpts).Register(api.Group("/memo")); err != nil {
 		return err
 	}
 
