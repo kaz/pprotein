@@ -4,15 +4,18 @@
       :group-id="groupId"
       :entries="$store.getters.entriesByGroup(groupId)"
     />
+    <AddMemo :group-id="groupId" />
   </section>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
 import GroupEntriesTable from "./GroupEntriesTable.vue";
+import AddMemo from "./AddMemo.vue";
 
 export default defineComponent({
   components: {
+    AddMemo,
     GroupEntriesTable,
   },
   computed: {

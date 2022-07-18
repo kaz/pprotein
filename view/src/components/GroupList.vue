@@ -9,6 +9,7 @@
         :group-id="group"
         :entries="$store.getters.entriesByGroup(group)"
       />
+      <AddMemo :group-id="group" />
     </details>
     <div v-if="!$store.state.groups.length">No entries!!</div>
   </section>
@@ -19,10 +20,12 @@ import { defineComponent } from "vue";
 import { createGroupId, addCollectJob } from "../collect";
 import { Config } from "../store";
 import GroupEntriesTable from "./GroupEntriesTable.vue";
+import AddMemo from "./AddMemo.vue";
 
 export default defineComponent({
   components: {
     GroupEntriesTable,
+    AddMemo,
   },
   methods: {
     async collect() {
