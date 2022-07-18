@@ -43,7 +43,7 @@ const state = {
   groups: [] as string[],
   entries: {} as { [key: string]: Entry },
 
-  settingKeys: ["group", "httplog"],
+  settingKeys: ["group/targets", "httplog/config"],
   settings: {} as { [key: string]: SettingRecord },
 };
 
@@ -61,9 +61,11 @@ const syncEntriesPlugin = (store: Store<typeof state>) => {
 
 const syncSettingsPlugin = (store: Store<typeof state>) => {
   store.state.settingKeys.forEach(async (key) => {
-    const resp = await fetch(`/api/setting/${key}`);
+    const resp = await fetch(`/api/${key}`);
     if (!resp.ok) {
-      return alert("HTTP Error: " + (await resp.text()));
+      return alert(
+        `http error: status=${resp.status}, message=${await resp.text()}`
+      );
     }
 
     store.commit("saveSetting", {
@@ -98,7 +100,9 @@ export default createStore({
       try {
         const resp = await fetch(`/api/${endpoint}`);
         if (!resp.ok) {
-          return alert("HTTP Error: " + (await resp.text()));
+          return alert(
+            `http error: status=${resp.status}, message=${await resp.text()}`
+          );
         }
 
         const entries = (await resp.json()) as Entry[];
@@ -111,12 +115,14 @@ export default createStore({
     },
     async updateSetting(store, { key, value }: SettingRecord) {
       try {
-        const resp = await fetch(`/api/setting/${key}`, {
+        const resp = await fetch(`/api/${key}`, {
           method: "POST",
           body: value,
         });
         if (!resp.ok) {
-          return alert("HTTP Error: " + (await resp.text()));
+          return alert(
+            `http error: status=${resp.status}, message=${await resp.text()}`
+          );
         }
 
         store.commit("saveSetting", { key, value } as SettingRecord);
@@ -149,9 +155,6 @@ export default createStore({
       return getters
         .entriesByGroup(groupId)
         .filter((e: Entry) => e.Status == "ok");
-    },
-    groupConfig: (state): Config[] => {
-      return JSON.parse(state.settings["group"]?.value || "[]");
     },
   },
 });

@@ -1,36 +1,34 @@
 package main
 
 import (
-	_ "embed"
 	"net/http"
 	"os"
 
 	"github.com/kaz/pprotein/integration/echov4"
 	"github.com/kaz/pprotein/internal/collect"
+	"github.com/kaz/pprotein/internal/collect/group"
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/extproc/alp"
 	"github.com/kaz/pprotein/internal/extproc/querydigest"
 	"github.com/kaz/pprotein/internal/pprof"
-	"github.com/kaz/pprotein/internal/setting"
 	"github.com/kaz/pprotein/internal/storage"
 	"github.com/kaz/pprotein/view"
 	"github.com/labstack/echo/v4"
 )
 
-//go:embed group.json
-var defaultGroupJson []byte
-
-//go:embed alp.yml
-var defaultAlpYml []byte
-
 func start() error {
-	e := echo.New()
-	echov4.Integrate(e)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "9000"
+	}
 
 	store, err := storage.New("data")
 	if err != nil {
 		return err
 	}
+
+	e := echo.New()
+	echov4.Integrate(e)
 
 	fs, err := view.FS()
 	if err != nil {
@@ -38,20 +36,15 @@ func start() error {
 	}
 	e.GET("/*", echo.WrapHandler(http.FileServer(http.FS(fs))))
 
-	groupJson, err := setting.NewHandler(store, "group.json", defaultGroupJson)
-	if err != nil {
-		return err
-	}
-	groupJson.Register(e.Group("/api/setting/group"))
-
-	alpYml, err := setting.NewHandler(store, "alp.yml", defaultAlpYml)
-	if err != nil {
-		return err
-	}
-	alpYml.Register(e.Group("/api/setting/httplog"))
+	api := e.Group("/api", func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Set("Cache-Control", "no-store")
+			return next(c)
+		}
+	})
 
 	hub := event.NewHub()
-	hub.RegisterHandlers(e.Group("/api/event"))
+	hub.RegisterHandlers(api.Group("/event"))
 
 	pOpts := &collect.Options{
 		Type:     "pprof",
@@ -59,7 +52,7 @@ func start() error {
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := pprof.NewHandler(pOpts).Register(e.Group("/api/pprof")); err != nil {
+	if err := pprof.NewHandler(pOpts).Register(api.Group("/pprof")); err != nil {
 		return err
 	}
 
@@ -69,7 +62,11 @@ func start() error {
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := alp.NewHandler(alpYml.Path, aOpts).Register(e.Group("/api/httplog")); err != nil {
+	aHandler, err := alp.NewHandler(aOpts, store)
+	if err != nil {
+		return err
+	}
+	if err := aHandler.Register(api.Group("/httplog")); err != nil {
 		return err
 	}
 
@@ -79,14 +76,16 @@ func start() error {
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := querydigest.NewHandler(qOpts).Register(e.Group("/api/slowlog")); err != nil {
+	if err := querydigest.NewHandler(qOpts).Register(api.Group("/slowlog")); err != nil {
 		return err
 	}
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "9000"
+	grp, err := group.NewCollector(store, port)
+	if err != nil {
+		return err
 	}
+	grp.RegisterHandlers(api.Group("/group"))
+
 	return e.Start(":" + port)
 }
 

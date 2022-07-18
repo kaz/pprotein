@@ -1,7 +1,5 @@
 import { SnapshotTarget } from "./store";
 
-export const createGroupId = (): string => new Date().toISOString();
-
 export const addCollectJob = async (
   endpoint: string,
   target: SnapshotTarget
@@ -15,6 +13,8 @@ export const addCollectJob = async (
   });
 
   if (!resp.ok) {
-    alert(await resp.text());
+    return alert(
+      `http error: status=${resp.status}, message=${await resp.text()}`
+    );
   }
 };
