@@ -1,14 +1,13 @@
 package memo
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
-
+	"github.com/goccy/go-json"
 	"github.com/kaz/pprotein/internal/collect"
+	"github.com/labstack/echo/v4"
 )
 
 type (
