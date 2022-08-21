@@ -13,7 +13,16 @@
       </thead>
       <tbody>
         <tr v-for="d in sortedData" :key="d.toString()">
-          <td v-for="(v, i) in d" :key="header[i]">{{ v }}</td>
+          <td v-for="(value, i) in d" :key="header[i]">
+            <div v-if="isNumeric(value)" class="numericCell">
+              {{ value }}
+            </div>
+            <details v-else-if="value.length > 24">
+              <summary>{{ value.slice(0, 24) }} ...</summary>
+              {{ value }}
+            </details>
+            <div v-else>{{ value }}</div>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -23,10 +32,6 @@
 <script lang="ts">
 import { parse } from "papaparse";
 import { defineComponent } from "vue";
-
-const isNumeric = (v: string) => {
-  return !isNaN(+v);
-};
 
 export default defineComponent({
   props: {
@@ -51,7 +56,7 @@ export default defineComponent({
     sortedData() {
       const data = this.rows.slice(1).sort((as, bs) => {
         const [a, b] = [as[this.sortColumn], bs[this.sortColumn]];
-        if (isNumeric(a)) {
+        if (this.isNumeric(a)) {
           return +a - +b;
         } else {
           if (a < b) {
@@ -72,6 +77,9 @@ export default defineComponent({
     },
   },
   methods: {
+    isNumeric(v: string) {
+      return !isNaN(+v);
+    },
     sortBy(column: number) {
       if (this.sortColumn === column) {
         this.sortOrder = this.sortOrder === "desc" ? "asc" : "desc";
@@ -98,15 +106,22 @@ td,
 th {
   padding: 0.5em 1em;
   border: 1px solid #999;
-  white-space: nowrap;
 }
-
 th {
   cursor: pointer;
+  white-space: nowrap;
 
   .sortOrder {
     font-size: 0.4em;
     color: gray;
   }
+}
+.numericCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+details[open] > summary {
+  display: none;
 }
 </style>
