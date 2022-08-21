@@ -9,7 +9,7 @@ import (
 	"github.com/kaz/pprotein/internal/collect/group"
 	"github.com/kaz/pprotein/internal/event"
 	"github.com/kaz/pprotein/internal/extproc/alp"
-	"github.com/kaz/pprotein/internal/extproc/querydigest"
+	"github.com/kaz/pprotein/internal/extproc/slp"
 	"github.com/kaz/pprotein/internal/memo"
 	"github.com/kaz/pprotein/internal/pprof"
 	"github.com/kaz/pprotein/internal/storage"
@@ -47,47 +47,51 @@ func start() error {
 	hub := event.NewHub()
 	hub.RegisterHandlers(api.Group("/event"))
 
-	pOpts := &collect.Options{
+	pprofOpts := &collect.Options{
 		Type:     "pprof",
 		Ext:      "-pprof.pb.gz",
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := pprof.NewHandler(pOpts).Register(api.Group("/pprof")); err != nil {
+	if err := pprof.NewHandler(pprofOpts).Register(api.Group("/pprof")); err != nil {
 		return err
 	}
 
-	aOpts := &collect.Options{
+	alpOpts := &collect.Options{
 		Type:     "httplog",
 		Ext:      "-httplog.log",
 		Store:    store,
 		EventHub: hub,
 	}
-	aHandler, err := alp.NewHandler(aOpts, store)
+	alpHandler, err := alp.NewHandler(alpOpts, store)
 	if err != nil {
 		return err
 	}
-	if err := aHandler.Register(api.Group("/httplog")); err != nil {
+	if err := alpHandler.Register(api.Group("/httplog")); err != nil {
 		return err
 	}
 
-	qOpts := &collect.Options{
+	slpOpts := &collect.Options{
 		Type:     "slowlog",
 		Ext:      "-slowlog.log",
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := querydigest.NewHandler(qOpts).Register(api.Group("/slowlog")); err != nil {
+	slpHandler, err := slp.NewHandler(slpOpts, store)
+	if err != nil {
+		return err
+	}
+	if err := slpHandler.Register(api.Group("/slowlog")); err != nil {
 		return err
 	}
 
-	mOpts := &collect.Options{
+	memoOpts := &collect.Options{
 		Type:     "memo",
 		Ext:      "-memo.log",
 		Store:    store,
 		EventHub: hub,
 	}
-	if err := memo.NewHandler(mOpts).Register(api.Group("/memo")); err != nil {
+	if err := memo.NewHandler(memoOpts).Register(api.Group("/memo")); err != nil {
 		return err
 	}
 

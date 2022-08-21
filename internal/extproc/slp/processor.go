@@ -1,4 +1,4 @@
-package querydigest
+package slp
 
 import (
 	"bytes"
@@ -10,7 +10,9 @@ import (
 )
 
 type (
-	processor struct{}
+	processor struct {
+		confPath string
+	}
 )
 
 func (p *processor) Cacheable() bool {
@@ -23,13 +25,12 @@ func (p *processor) Process(snapshot *collect.Snapshot) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("failed to find snapshot body: %w", err)
 	}
 
-	cmd := exec.Command("pt-query-digest", "--limit", "100%", "--output", "json", bodyPath)
+	cmd := exec.Command("slp", "--config", p.confPath, "--output", "standard", "--format", "tsv", "--file", bodyPath)
 
 	res, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("external process aborted: %w", err)
 	}
 
-	starts := bytes.IndexByte(res, '{')
-	return io.NopCloser(bytes.NewBuffer(res[starts:])), nil
+	return io.NopCloser(bytes.NewBuffer(res)), nil
 }
