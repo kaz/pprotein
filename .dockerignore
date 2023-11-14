@@ -1,6 +1,8 @@
 Dockerfile
 mock.Dockerfile
 
+compose.yaml
+
 pprotein
 data
 

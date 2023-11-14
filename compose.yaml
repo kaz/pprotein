@@ -1,0 +1,13 @@
+services:
+  mock:
+    build:
+      context: .
+      dockerfile: mock.Dockerfile
+  pprotein:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mock
+    ports:
+      - 9000:9000
