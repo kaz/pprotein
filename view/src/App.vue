@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts">
-import "typeface-courier-prime";
+import "@fontsource/courier-prime";
 import { defineComponent } from "vue";
 
 type Dict = { [key: string]: string };
@@ -45,7 +45,7 @@ export default defineComponent({
     getTitle(params: Dict, meta: Dict) {
       return Object.entries(params).reduce(
         (title, [key, val]) => title.replace(`{{${key}}}`, val),
-        meta.title || ""
+        meta.title || "",
       );
     },
   },
