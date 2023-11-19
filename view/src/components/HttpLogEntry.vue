@@ -15,9 +15,17 @@ export default defineComponent({
       tsv: "",
     };
   },
-  async beforeCreate() {
-    const resp = await fetch(`/api/httplog/${this.$route.params.id}`);
-    this.tsv = await resp.text();
+  async created() {
+    await this.updateTsv(this.$route.params.id);
+  },
+  async beforeRouteUpdate(route) {
+    await this.updateTsv(route.params.id);
+  },
+  methods: {
+    async updateTsv(id: string | string[]) {
+      const resp = await fetch(`/api/httplog/${id}`);
+      this.tsv = await resp.text();
+    },
   },
 });
 </script>
