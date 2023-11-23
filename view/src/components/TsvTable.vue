@@ -1,5 +1,6 @@
 <template>
   <section>
+    <a :href="link" download>Download</a>
     <table border="1">
       <thead>
         <tr>
@@ -39,6 +40,9 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    link: {
+      type: String
+    }
   },
   data() {
     return {
