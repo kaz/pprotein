@@ -1,5 +1,5 @@
 <template>
-  <TsvTable :tsv="tsv" :link="`/api/slowlog/data/${$route.params.id}`"/>
+  <TsvTable :tsv="tsv" :link="`/api/httplog/data/${$route.params.id}`"/>
 </template>
 
 <script lang="ts">
