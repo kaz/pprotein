@@ -87,6 +87,10 @@ func (h *handler) getLatestData(c echo.Context) error {
 			if label != "" && label != entry.Snapshot.SnapshotTarget.Label {
 				continue
 			}
+			if entry.Status != collect.StatusOk {
+				continue
+			}
+
 			bodyPath, err := entry.Snapshot.BodyPath()
 			if err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("failed to get body path: %v", err))
