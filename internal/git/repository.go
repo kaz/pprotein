@@ -17,7 +17,9 @@ type (
 )
 
 func GetInfo(repoDir string) (*RepositoryInfo, error) {
-	repo, err := git.PlainOpen(repoDir)
+	repo, err := git.PlainOpenWithOptions(repoDir, &git.PlainOpenOptions{
+		DetectDotGit: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to open git repo: %w", err)
 	}
