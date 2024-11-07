@@ -13,10 +13,10 @@ run-agent:
 build: pprotein pprotein-agent
 
 pprotein: view/dist
-	go build -ldflags="-w -s" -gcflags="-trimpath=$$PWD" -asmflags="-trimpath=$$PWD" ./cli/pprotein
+	go build -trimpath -ldflags="-w -s" ./cli/pprotein
 
 pprotein-agent:
-	go build -ldflags="-w -s" -gcflags="-trimpath=$$PWD" -asmflags="-trimpath=$$PWD" ./cli/pprotein-agent
+	go build -trimpath -ldflags="-w -s" ./cli/pprotein-agent
 
 view/dist:
 	npm --prefix view ci
